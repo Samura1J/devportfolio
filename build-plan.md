@@ -146,7 +146,17 @@ Changes from the steps below, found while building:
 - Vitest in every workspace, with a root `vitest.workspace` (or `projects`) config. Frontends use jsdom and `@testing-library/react`; the API uses `supertest`.
 - Done when `npm run dev` serves a placeholder page on all three ports, `GET /api/v1/health` returns `{ ok: true }` through each Vite proxy, and one trivial test passes per workspace.
 
-### Phase 1: Portfolio (new design)
+### Phase 1: Portfolio (new design) ✅ done 2026-11-14
+
+Changes from the steps below, found while building:
+- **Project copy describes what the rewrite actually does**, not the mockup's features (Decision 8). Every unconfirmed claim is tagged `TODO(copy)` in `src/content/content.ts`. Both code snippets are illustrative until Phases 2 and 4 land the real code.
+- **Contact form posts to `/api/v1/contact`** and, until 3.8 exists, shows "couldn't be sent, reach me on LinkedIn". It does not fall back to `mailto:`, which would have put an email address on the page.
+- **New `outline-strong` token** for form-control borders, because WCAG 1.4.11 needs 3:1 and `outline` is 1.4:1. `theme.contrast.test.ts` checks every text and border token in both themes.
+- **The body scroll lock is CSS** (`html:has(dialog:modal)`). A native modal `<dialog>` doesn't lock scrolling itself.
+- **Header layout:** the section nav shows from `md`, and the GitHub button shows on phones and from `lg` (hidden on tablets so the nav fits). The bottom tab bar covers below `md`.
+- **`/#section` links** scroll after mount, because the browser looks for the anchor before React renders it.
+- **axe-core runs directly** (`vitest-axe` is unmaintained), with the color-contrast rule off in jsdom because the token test covers contrast.
+- **jsdom has no `<dialog>`.** `src/test/setup.ts` polyfills `showModal`/`close`. Focus trap, Esc and focus return were verified in a real browser.
 
 Built from `design/`: one responsive page using `packages/ui`.
 
@@ -198,7 +208,7 @@ Done when, with real test keys in `.env`, `curl` against `/movies` and `/checkou
 
 ### Phase 2: Weather app
 
-**2.1 Check the WeatherAPI plan:** call `forecast.json?days=7` once with your key and record how many days come back. That fixes `FORECAST_DAYS` and the grid.
+**2.1 Check the WeatherAPI plan:** ✅ checked 2026-11-14. `days=7` returns **3 days** on this key, so `FORECAST_DAYS = 3` with a `md:grid-cols-3` grid. Also: for Amsterdam's coordinates `location.name` came back as **"Binnenstad"** (a neighbourhood). Show the city name from `cities.ts`, not the API's `location.name`.
 
 **2.2 Shared types** (`packages/shared/src/weather.ts`): the `Condition` union (without windy/humid by default), `DailyForecastSchema`, `ForecastResponseSchema` (`{ location: { name, country }, days: DailyForecast[] }`), `WeatherQuerySchema` (lat/lon with `z.coerce.number()` and ranges).
 

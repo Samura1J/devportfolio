@@ -27,6 +27,7 @@ export default defineConfig([
     },
     rules: {
       "no-console": ["warn", { allow: ["warn", "error"] }],
+      "@typescript-eslint/no-confusing-void-expression": ["error", { ignoreArrowShorthand: true }],
       "@typescript-eslint/no-unused-vars": [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },

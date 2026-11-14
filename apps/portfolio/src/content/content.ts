@@ -1,0 +1,296 @@
+/**
+ * All page copy lives here, so text can change without touching components.
+ *
+ * TODO(copy) marks text Corey still needs to confirm. The mockup copy in
+ * design/ described features the apps don't have (pricing tiers, seat
+ * reservation locks, Lighthouse scores, etc.); the project copy below
+ * describes what the TypeScript rewrite actually does instead.
+ */
+import type {
+  Capability,
+  ContactCopy,
+  EngagementPoint,
+  NavItem,
+  Profile,
+  Project,
+  Roadmap,
+  SocialLink,
+  TabItem,
+} from "./types";
+
+const GITHUB_URL = "https://github.com/Samura1J";
+const LINKEDIN_URL = "https://www.linkedin.com/in/corey-joseph-5517a917/";
+// TODO(copy): point at the portfolio-ts repository once it is public.
+const REPO_URL = GITHUB_URL;
+
+export const navItems: NavItem[] = [
+  { href: "#projects", label: "Featured Projects" },
+  { href: "#capabilities", label: "Stack" },
+  { href: "#engagement", label: "How I Work" },
+  { href: "#contact", label: "Contact" },
+];
+
+export const tabItems: TabItem[] = [
+  { href: "#hero", label: "Top", icon: "home" },
+  { href: "#projects", label: "Projects", icon: "folder" },
+  { href: "#capabilities", label: "Skills", icon: "terminal" },
+  { href: "#contact", label: "Contact", icon: "mail" },
+];
+
+export const profile: Profile = {
+  name: "Corey Joseph",
+  initials: "CJ",
+  role: "Full Stack & Frontend Dev",
+  // TODO(copy): confirm availability.
+  availability: {
+    full: "Open to full-time roles & freelance product work",
+    short: "Open to roles & freelance work",
+  },
+  headline: {
+    full: "Building responsive frontend experiences with full-stack scalability.",
+    short: "Building responsive web apps with full-stack scalability.",
+  },
+  introRest: {
+    full: ", a web developer specializing in React interfaces, state-driven user flows, and typed Node backends. I help businesses turn product ideas into clean, reliable, accessible applications.",
+    short: ", building React interfaces backed by typed Node APIs for product teams.",
+  },
+  // TODO(copy): the mockup's "100% Client Delivery Focus" was replaced with a checkable claim.
+  metrics: [
+    { value: "React + TS", label: "Frontend core" },
+    { value: "Full Stack", label: "Node / Express / APIs", tone: "accent" },
+    { value: "Typed E2E", label: "Shared schemas, strict TS", tone: "success" },
+  ],
+  profileCard: {
+    filename: "engineer-profile.json",
+    fields: {
+      name: "Corey Joseph",
+      focus: "Frontend & Backend Systems",
+      strengths: [
+        "Responsive UI Architecture",
+        "REST API Design & Consumption",
+        "Component State Management",
+        "End-to-end TypeScript",
+      ],
+      current_learning: "PostgreSQL, Auth, Deployment",
+      // TODO(copy): confirm.
+      status: "Available for contract & full-time",
+    },
+  },
+  // TODO(copy): confirm.
+  location: { label: "Primary location", value: "Remote / Hybrid" },
+};
+
+export const projects: Project[] = [
+  {
+    slug: "weather",
+    title: "European Cities Weather Forecast",
+    shortTitle: "Weather Forecast",
+    summary: {
+      full: "A 3-day forecast for 55 European cities. A typed Express proxy keeps the API key on the server, validates every upstream response, and caches each location for 30 minutes.",
+      short: "3-day forecasts for 55 European cities, served through a typed, cached Express proxy.",
+    },
+    badges: [
+      { label: "React + TS", variant: "accent" },
+      { label: "WeatherAPI.com", variant: "muted" },
+    ],
+    statusLabel: "v2 · Full-stack rewrite",
+    highlightsIcon: "terminal",
+    highlights: [
+      "The API key never reaches the browser: every call goes through an Express proxy.",
+      "Upstream responses are validated with zod and normalized into one shared type.",
+      "A per-location server cache serves repeat lookups without calling upstream.",
+    ],
+    stack: ["React 19", "TypeScript", "Express 5", "zod", "Tailwind CSS"],
+    liveUrl: "/projects/weatherappv2/",
+    liveLabel: "Launch Live",
+    repoUrl: REPO_URL,
+    caseStudy: {
+      heading: "Technical Case Study & Architecture",
+      tags: ["React 19", "TypeScript", "WeatherAPI.com", "Express proxy"],
+      status: "Live",
+      intro:
+        "A forecast app rebuilt from a browser-only React project into a small full-stack system: a typed proxy owns the API key, validation and caching, and the frontend renders one shared forecast type.",
+      metrics: [
+        { label: "Cities", value: "55 EU cities" },
+        { label: "Forecast", value: "3 days" },
+        { label: "Server cache", value: "30 min" },
+        { label: "API key exposure", value: "Server-only" },
+      ],
+      challenge:
+        "Version 1 called a free weather API straight from the browser, parsed a CSV of cities client-side, and hand-converted units and compact date strings. Moving to a keyed API meant the key could no longer ship to the browser.",
+      solution:
+        "A thin Express proxy validates the coordinates, checks a per-location cache, fetches the forecast, parses it with zod, and maps WeatherAPI's 48 condition codes onto the app's 14 icons. It returns a DailyForecast type that the frontend imports from the same shared package.",
+      evolution:
+        "The rewrite moved the hard parts to the server: secrets, validation, caching and error mapping. The frontend now only handles loading, error and empty states, and the type checker enforces the contract on both sides.",
+      // TODO(copy): replace with the real code once Phase 2 lands.
+      snippet: {
+        filename: "apps/api/src/weather/conditions.ts",
+        language: "TypeScript",
+        code: `// Map WeatherAPI condition codes onto the app's icon set
+const CODE_TO_CONDITION: Record<number, Condition> = {
+  1000: "clear",
+  1003: "pcloudy",
+  1006: "cloudy",
+  1009: "mcloudy",
+  1030: "fog", 1135: "fog", 1147: "fog",
+  // ...48 codes in total, checked against weather_conditions.json
+};
+
+export function toCondition(code: number): Condition {
+  return CODE_TO_CONDITION[code] ?? "cloudy";
+}`,
+      },
+    },
+  },
+  {
+    slug: "seatpicker",
+    title: "Movie Seat Picker & Checkout",
+    shortTitle: "Seat Picker",
+    summary: {
+      full: "Pick one of today's trending films, choose seats on a 10×10 auditorium map, and pay through Stripe Checkout in test mode. The server re-checks the movie, every seat and the price before charging.",
+      short: "Trending films, a 10×10 seat map, and Stripe Checkout in test mode.",
+    },
+    badges: [
+      { label: "React + TS", variant: "accent" },
+      { label: "Stripe Checkout", variant: "muted" },
+    ],
+    statusLabel: "Live demo · Test mode",
+    highlightsIcon: "code",
+    highlights: [
+      "Movies come live from TMDB and are cached on the server.",
+      "The selection lives in the URL, so a refresh or a shared link keeps your seats.",
+      "Seat IDs share one zod schema, and the server validates them before Stripe sees anything.",
+    ],
+    stack: ["React 19", "TypeScript", "React Router", "Express 5", "Stripe", "TMDB API"],
+    liveUrl: "/projects/seatpicker/",
+    liveLabel: "Launch Live",
+    repoUrl: REPO_URL,
+    caseStudy: {
+      heading: "Checkout Flow & State Architecture",
+      tags: ["React 19", "TypeScript", "Stripe Checkout", "TMDB API"],
+      status: "Live demo",
+      intro:
+        "A ticketing flow from movie choice to payment: a typed seat map on the client, and a server that owns pricing and validation before handing off to Stripe Checkout.",
+      metrics: [
+        { label: "Seats", value: "100 (10×10)" },
+        { label: "Payments", value: "Stripe Checkout" },
+        { label: "Movies", value: "Live from TMDB" },
+        { label: "Selection state", value: "URL-persisted" },
+      ],
+      challenge:
+        "Version 1 kept the selection in router state, so a refresh lost it. It sent the movie title and seat count to a server that trusted both, created a new Stripe product on every checkout, and redirected to an internal hostname after payment.",
+      solution:
+        "Seat IDs are a template-literal type backed by a shared zod schema. The URL carries the movie ID and seats. The server resolves the movie from its own TMDB cache, rejects unknown or duplicate seats, builds the line item itself, and derives the return URLs from configuration.",
+      evolution:
+        "Next comes real occupancy: sold seats need a database and short reservation holds that expire if checkout is abandoned. That is the natural next full-stack step for this project.",
+      // TODO(copy): replace with the real code once Phase 4 lands.
+      snippet: {
+        filename: "packages/shared/src/seatpicker.ts",
+        language: "TypeScript",
+        code: `// One schema validates seats on the client and the server
+export const SeatIdSchema = z
+  .string()
+  .regex(/^(10|[1-9])[A-J]$/, "Unknown seat");
+
+export const CheckoutRequestSchema = z.object({
+  movieId: z.number().int().positive(),
+  seats: z
+    .array(SeatIdSchema)
+    .min(1)
+    .max(MAX_SEATS)
+    .refine((s) => new Set(s).size === s.length, "Duplicate seat"),
+});`,
+      },
+    },
+  },
+];
+
+// TODO(copy): confirm this project exists, or set to undefined to hide the teaser.
+export const roadmap: Roadmap | undefined = {
+  title: "Currently Building: Full-Stack SaaS MVP",
+  status: "In Development",
+  description:
+    "Node.js + Express REST API with a PostgreSQL database, JWT authentication, and a React dashboard.",
+  link: { href: GITHUB_URL, label: "Track on GitHub" },
+};
+
+// TODO(copy): confirm skill levels.
+export const capabilities: Capability[] = [
+  {
+    title: "Frontend Architecture",
+    icon: "devices",
+    tone: "primary",
+    blurb: "Responsive, accessible, component-driven client applications.",
+    items: [
+      { name: "React (Hooks, Context, Router)", level: "Advanced", tone: "success" },
+      { name: "TypeScript (strict)", level: "Proficient", tone: "success" },
+      { name: "Tailwind CSS & Modern CSS", level: "Advanced", tone: "success" },
+      { name: "Responsive & Accessible UI", level: "Advanced", tone: "success" },
+    ],
+  },
+  {
+    title: "Backend & APIs",
+    icon: "server",
+    tone: "accent",
+    blurb: "Typed services that power frontends end-to-end.",
+    items: [
+      { name: "Node.js & Express", level: "Proficient", tone: "success" },
+      { name: "REST API Design & zod Validation", level: "Proficient", tone: "success" },
+      { name: "PostgreSQL & SQL", level: "Active Focus", tone: "accent" },
+      { name: "Authentication & Middleware", level: "Active Focus", tone: "accent" },
+    ],
+  },
+  {
+    title: "Delivery & Quality",
+    icon: "gauge",
+    tone: "warning",
+    blurb: "Fast pages, clean history, and checks that catch mistakes before users do.",
+    items: [
+      { name: "Git & GitHub Collaboration", level: "Proficient", tone: "success" },
+      { name: "Vitest & Testing Library", level: "Proficient", tone: "success" },
+      { name: "Vite & Modern Tooling", level: "Proficient", tone: "success" },
+      { name: "Cross-Browser Consistency", level: "Proficient", tone: "success" },
+    ],
+  },
+];
+
+export const engagement = {
+  eyebrow: "Collaboration & Engagement",
+  title: "How I Partner with Hiring Managers & Business Owners",
+  intro:
+    "Whether joining an engineering team full-time or contracting on a focused build, here is what you can expect from day one.",
+  points: [
+    {
+      title: "For Tech Teams & Hiring Managers",
+      body: "I write clean, documented React and TypeScript that fits into existing codebases. I value clear communication, take review feedback seriously, and am growing into full-stack responsibilities as the team needs them.",
+      tone: "primary",
+    },
+    {
+      title: "For Freelance Clients & Small Businesses",
+      body: "I don’t just write code. I help refine requirements, choose dependable hosting, and deliver fast, mobile-friendly pages. No confusing jargon, just steady progress updates and on-time launches.",
+      tone: "accent",
+    },
+  ] satisfies EngagementPoint[],
+};
+
+export const socialLinks: SocialLink[] = [
+  { kind: "linkedin", href: LINKEDIN_URL, label: "Connect on LinkedIn", handle: "in/corey-joseph-5517a917" },
+  { kind: "github", href: GITHUB_URL, label: "Inspect Code on GitHub", handle: "github.com/Samura1J" },
+];
+
+export const contact: ContactCopy = {
+  eyebrow: "Start a Conversation",
+  title: "Let’s Build Something Great Together",
+  intro:
+    "Have an open engineering role, need an estimate on a web app, or want to review my code? Send a message, or reach out directly on GitHub or LinkedIn.",
+  inquiryLabels: {
+    "full-time": "Full-time engineering role",
+    contract: "Contract / freelance web project",
+    consultation: "Technical consultation",
+    networking: "General networking",
+  },
+};
+
+export const footer = {
+  tagline: "Designed for performance and clean engineering.",
+};

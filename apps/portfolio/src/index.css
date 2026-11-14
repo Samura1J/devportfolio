@@ -1,2 +1,13 @@
 @import "tailwindcss";
 @import "@portfolio/ui/theme.css";
+
+/* Anchor jumps land below the sticky header (h-16 mobile, h-20 from md). */
+html {
+  scroll-padding-top: 5rem;
+}
+
+@media (width >= 48rem) {
+  html {
+    scroll-padding-top: 6rem;
+  }
+}

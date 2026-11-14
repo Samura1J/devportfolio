@@ -21,6 +21,8 @@
   --cj-surface-container: #ffffff;
   --cj-surface-container-high: #f1f5f9;
   --cj-outline: #cbd5e1;
+  /* Form-control borders need 3:1 (WCAG 1.4.11); plain outline is decorative only. */
+  --cj-outline-strong: #64748b;
   /* Review D3: darker text shades for small accent/success text on light surfaces. */
   --cj-accent-ink: #0e7490;
   --cj-success-ink: #047857;
@@ -36,6 +38,7 @@
   --cj-surface-container: #111827;
   --cj-surface-container-high: #1e293b;
   --cj-outline: #334155;
+  --cj-outline-strong: #64748b;
   --cj-accent-ink: #22d3ee;
   --cj-success-ink: #34d399;
   color-scheme: dark;
@@ -50,6 +53,7 @@
   --color-surface-container: var(--cj-surface-container);
   --color-surface-container-high: var(--cj-surface-container-high);
   --color-outline: var(--cj-outline);
+  --color-outline-strong: var(--cj-outline-strong);
   --color-accent-ink: var(--cj-accent-ink);
   --color-success-ink: var(--cj-success-ink);
 }
@@ -143,6 +147,11 @@
     html {
       scroll-behavior: smooth;
     }
+  }
+
+  /* A modal <dialog> doesn't stop the page behind it scrolling on its own. */
+  html:has(dialog[open]:modal) {
+    overflow: hidden;
   }
 
   ::selection {
