@@ -1,0 +1,287 @@
+<!DOCTYPE html><html lang="en" class="scroll-smooth"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Case Study: Seat Allocation Engine — Corey Joseph</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'accent': '#0891B2',
+        'success': '#059669',
+        'warning': '#D97706',
+        'error': '#DC2626',
+        'light-primary': '#1D4ED8',
+        'light-on-primary': '#FFFFFF',
+        'light-surface': '#F8FAFC',
+        'light-on-surface': '#0F172A',
+        'light-surface-container': '#FFFFFF',
+        'light-surface-container-high': '#F1F5F9',
+        'light-outline': '#CBD5E1',
+        'dark-primary': '#60A5FA',
+        'dark-on-primary': '#0B192C',
+        'dark-surface': '#090D16',
+        'dark-on-surface': '#F1F5F9',
+        'dark-surface-container': '#111827',
+        'dark-surface-container-high': '#1E293B',
+        'dark-outline': '#334155',
+      },
+      borderRadius: {
+        'sm': '0px',
+        'DEFAULT': '0px',
+        'md': '0px',
+        'lg': '0px',
+        'xl': '0px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '16px',
+        'gutter-lg': '24px',
+        'gutter-xl': '32px',
+        'section': '64px',
+        'page-margin': '24px',
+      },
+      fontFamily: {
+        'display': ['"Red Hat Text"', 'sans-serif'],
+        'headline': ['"Red Hat Text"', 'sans-serif'],
+        'body': ['"Instrument Sans"', 'sans-serif'],
+        'label': ['"Red Hat Text"', 'sans-serif'],
+      },
+      fontSize: {
+        'display-lg': ['48px', { lineHeight: '56px', letterSpacing: '-1px', fontWeight: '700' }],
+        'display-lg-mobile': ['32px', { lineHeight: '40px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'headline-lg': ['36px', { lineHeight: '44px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'headline-lg-mobile': ['28px', { lineHeight: '36px', letterSpacing: '-0.25px', fontWeight: '700' }],
+        'headline-md': ['24px', { lineHeight: '32px', letterSpacing: '-0.25px', fontWeight: '600' }],
+        'headline-sm': ['20px', { lineHeight: '28px', fontWeight: '600' }],
+        'body-lg': ['18px', { lineHeight: '28px', fontWeight: '400' }],
+        'body-md': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+        'body-sm': ['14px', { lineHeight: '20px', fontWeight: '400' }],
+        'label-lg': ['15px', { lineHeight: '22px', fontWeight: '600' }],
+        'label-md': ['13px', { lineHeight: '18px', fontWeight: '500' }],
+        'label-sm': ['12px', { lineHeight: '16px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '150ms',
+        'surface-enter': '240ms',
+        'surface-exit': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'surface-enter': '0ms',
+        'surface-exit': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'surface-enter': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'surface-exit': 'ease-in',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@500;600;700&amp;family=Instrument+Sans:wght@400;500;600&amp;family=Source+Code+Pro:wght@500;600&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+</head>
+<body class="bg-light-surface text-light-on-surface dark:bg-dark-surface dark:text-dark-on-surface min-h-[1024px] font-body antialiased relative overflow-x-hidden selection:bg-light-primary selection:text-light-on-primary" data-stitch-vh="min-h-[1024px]===min-h-screen">
+
+  <!-- Background Dimmed Canvas Mimicking Underneath Portfolio Screen -->
+  <div class="fixed inset-0 bg-slate-950/70 dark:bg-black/85 backdrop-blur-sm z-40 transition-opacity" aria-hidden="true"></div>
+
+  <!-- Modal Viewport Overlay Container -->
+  <div class="relative z-50 min-h-[1024px] py-10 px-4 md:px-8 flex items-center justify-center" data-stitch-vh="min-h-[1024px]===min-h-screen">
+    
+    <!-- Modal Dialog Sheet -->
+    <div role="dialog" aria-modal="true" aria-labelledby="modal-project-title" class="w-full max-w-4xl bg-light-surface-container dark:bg-dark-surface-container border border-light-outline dark:border-dark-outline/70 rounded-none shadow-2xl overflow-hidden flex flex-col my-auto transition-colors">
+      
+      <!-- Modal Navigation Bar & Controls -->
+      <div class="px-6 py-4 border-b border-light-outline/70 dark:border-dark-outline/60 flex items-center justify-between bg-light-surface-container-high/60 dark:bg-dark-surface-container-high/40">
+        <div class="flex items-center gap-3">
+          <span class="w-2.5 h-2.5 bg-accent inline-block"></span>
+          <span class="font-mono text-label-sm text-accent font-semibold tracking-wide uppercase">Interactive State Engine &amp; Architecture</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <!-- Theme Toggle inside modal -->
+          <button id="modal-theme-toggle" type="button" aria-label="Toggle light and dark mode" class="inline-flex items-center justify-center w-8 h-8 rounded-none border border-light-outline dark:border-dark-outline/60 bg-light-surface dark:bg-dark-surface-container text-light-on-surface dark:text-dark-on-surface hover:border-light-primary dark:hover:border-dark-primary transition-colors focus:outline-none">
+            <span id="modal-theme-toggle-light-icon" class="material-symbols-outlined text-[17px] hidden">light_mode</span>
+            <span id="modal-theme-toggle-dark-icon" class="material-symbols-outlined text-[17px]">dark_mode</span>
+          </button>
+
+          <!-- Close / Back Link -->
+          <a href="../portfolio-home/CoreyJosephPortfolio.html" aria-label="Close modal and return to portfolio" class="inline-flex items-center justify-center w-8 h-8 rounded-none border border-light-outline dark:border-dark-outline/60 bg-light-surface dark:bg-dark-surface-container text-light-on-surface dark:text-dark-on-surface hover:bg-light-surface-container-high dark:hover:bg-dark-surface-container-high transition-colors">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Modal Body Content -->
+      <div class="p-6 md:p-10 space-y-8 overflow-y-auto max-h-[839px]" data-stitch-vh="max-h-[839px]===max-h-[82vh]">
+
+        <!-- Header Block -->
+        <div class="space-y-4 border-b border-light-outline/60 dark:border-dark-outline/40 pb-8">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2.5 py-1 rounded-none bg-light-surface-container-high dark:bg-dark-surface-container-high text-accent font-mono text-xs font-semibold">React 18</span>
+            <span class="px-2.5 py-1 rounded-none bg-light-surface-container-high dark:bg-dark-surface-container-high text-light-on-surface/70 dark:text-dark-outline font-mono text-xs">Dynamic State Matrix</span>
+            <span class="px-2.5 py-1 rounded-none bg-light-surface-container-high dark:bg-dark-surface-container-high text-light-on-surface/70 dark:text-dark-outline font-mono text-xs">CSS Grid Layout</span>
+            <span class="px-2.5 py-1 rounded-none bg-accent/15 text-accent font-mono text-xs font-semibold">Interactive Prototype</span>
+          </div>
+
+          <h2 id="modal-project-title" class="font-headline text-headline-lg font-bold text-light-on-surface dark:text-dark-on-surface">
+            Interactive Auditorium Seat Allocation Engine
+          </h2>
+
+          <p class="font-body text-body-lg text-light-on-surface/85 dark:text-dark-on-surface/85 leading-relaxed max-w-3xl">
+            A state-synchronized event ticket booking system that handles dynamic 2D theater seat grids, tier pricing calculations, occupancy states, and responsive layout scaling with 60 FPS interaction fidelity.
+          </p>
+
+          <!-- Primary External Action Links -->
+          <div class="flex flex-wrap items-center gap-4 pt-2">
+            <a href="https://coreyjoseph.me/projects/seatpicker" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-none bg-light-primary text-light-on-primary dark:bg-dark-primary dark:text-dark-on-primary font-label text-label-md font-semibold hover:opacity-90 transition-all shadow-sm">
+              <span>Launch Live Prototype</span>
+              <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+            </a>
+            <a href="https://github.com/Samura1J" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-none bg-light-surface dark:bg-dark-surface-container border border-light-outline dark:border-dark-outline/60 text-light-on-surface dark:text-dark-on-surface font-label text-label-md hover:border-light-primary dark:hover:border-dark-primary transition-colors">
+              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"></path></svg>
+              <span>Inspect Source Repository</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Metric Outcomes Bar -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-none bg-light-surface-container-high/60 dark:bg-dark-surface-container-high/40 border border-light-outline/70 dark:border-dark-outline/40">
+          <div>
+            <div class="font-mono text-xs text-light-on-surface/60 dark:text-dark-outline uppercase">Render Latency</div>
+            <div class="font-headline text-headline-sm font-bold text-light-primary dark:text-dark-primary mt-0.5">&lt; 16ms (60 FPS)</div>
+          </div>
+          <div>
+            <div class="font-mono text-xs text-light-on-surface/60 dark:text-dark-outline uppercase">Seat Nodes</div>
+            <div class="font-headline text-headline-sm font-bold text-accent mt-0.5">80+ Matrix Units</div>
+          </div>
+          <div>
+            <div class="font-mono text-xs text-light-on-surface/60 dark:text-dark-outline uppercase">Pricing Tiers</div>
+            <div class="font-headline text-headline-sm font-bold text-success mt-0.5">3 Live Categories</div>
+          </div>
+          <div>
+            <div class="font-mono text-xs text-light-on-surface/60 dark:text-dark-outline uppercase">State Re-renders</div>
+            <div class="font-headline text-headline-sm font-bold text-light-on-surface dark:text-dark-on-surface mt-0.5">Isolated Nodes</div>
+          </div>
+        </div>
+
+        <!-- 3-Column Architectural Breakdown -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+          <!-- Col 1: Problem & Motivation -->
+          <div class="p-5 rounded-none bg-light-surface dark:bg-dark-surface-container-high/30 border border-light-outline dark:border-dark-outline/50 space-y-3">
+            <div class="w-8 h-8 rounded-none bg-light-primary/10 dark:bg-dark-primary/20 text-light-primary dark:text-dark-primary flex items-center justify-center font-bold text-xs font-mono">
+              01
+            </div>
+            <h3 class="font-headline text-headline-sm font-semibold text-light-on-surface dark:text-dark-on-surface">The Challenge</h3>
+            <p class="font-body text-body-sm text-light-on-surface/75 dark:text-dark-on-surface/75 leading-relaxed">
+              Managing complex multi-item selection across a large grid in React often triggers unnecessary full-matrix re-renders. Every click must immediately update both seat visual state and overall shopping cart tallies without UI stutter.
+            </p>
+          </div>
+
+          <!-- Col 2: Engineering Architecture -->
+          <div class="p-5 rounded-none bg-light-surface dark:bg-dark-surface-container-high/30 border border-light-outline dark:border-dark-outline/50 space-y-3">
+            <div class="w-8 h-8 rounded-none bg-accent/10 dark:bg-accent/20 text-accent flex items-center justify-center font-bold text-xs font-mono">
+              02
+            </div>
+            <h3 class="font-headline text-headline-sm font-semibold text-light-on-surface dark:text-dark-on-surface">Architecture Solution</h3>
+            <p class="font-body text-body-sm text-light-on-surface/75 dark:text-dark-on-surface/75 leading-relaxed">
+              Modeled seat availability using an indexed coordinate hash map. Individual seat cells react only to their specific state changes, while an immutable selected set drives the price accumulator at the root tier.
+            </p>
+          </div>
+
+          <!-- Col 3: Key Takeaway / Growth -->
+          <div class="p-5 rounded-none bg-light-surface dark:bg-dark-surface-container-high/30 border border-light-outline dark:border-dark-outline/50 space-y-3">
+            <div class="w-8 h-8 rounded-none bg-success/10 dark:bg-success/20 text-success flex items-center justify-center font-bold text-xs font-mono">
+              03
+            </div>
+            <h3 class="font-headline text-headline-sm font-semibold text-light-on-surface dark:text-dark-on-surface">Full Stack Evolution</h3>
+            <p class="font-body text-body-sm text-light-on-surface/75 dark:text-dark-on-surface/75 leading-relaxed">
+              Demonstrated core frontend transaction management that naturally extends to backend WebSocket seat concurrency locks, database transaction rollbacks, and checkout reservation expiration timers.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Code Snippet / State Architecture Implementation Showcase -->
+        <div class="p-6 rounded-none bg-light-surface dark:bg-dark-surface-container-high/40 border border-light-outline dark:border-dark-outline/50 space-y-4">
+          <div class="flex items-center justify-between border-b border-light-outline/60 dark:border-dark-outline/40 pb-3">
+            <div class="flex items-center gap-2 font-mono text-xs font-semibold text-light-on-surface dark:text-dark-on-surface">
+              <span class="material-symbols-outlined text-[16px] text-accent">view_module</span>
+              <span>useSeatMatrix.js — Immutable State &amp; Selection Lock</span>
+            </div>
+            <span class="font-mono text-[11px] text-light-on-surface/50 dark:text-dark-outline">React Hooks</span>
+          </div>
+
+          <pre class="font-mono text-xs text-light-on-surface/90 dark:text-dark-on-surface/90 overflow-x-auto leading-relaxed p-4 bg-light-surface-container-high/50 dark:bg-dark-surface/90 border border-light-outline/40 dark:border-dark-outline/30"><code>// State reducer ensuring idempotent seat toggle with tier valuation
+export function toggleSeatSelection(currentSelection, seatId, seatTier) {
+  const nextSelection = new Map(currentSelection);
+  if (nextSelection.has(seatId)) {
+    nextSelection.delete(seatId);
+  } else {
+    nextSelection.set(seatId, { ...seatTier, lockedAt: Date.now() });
+  }
+  const totalValuation = Array.from(nextSelection.values())
+    .reduce((sum, item) =&gt; sum + item.priceUsd, 0);
+
+  return { selectedSeats: nextSelection, totalPrice: totalValuation };
+}</code></pre>
+        </div>
+
+        <!-- Previous Project Quick Switcher -->
+        <div class="pt-4 border-t border-light-outline/70 dark:border-dark-outline/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="text-body-sm text-light-on-surface/70 dark:text-dark-outline">
+            Looking at project 2 of 2: <span class="font-semibold text-light-on-surface dark:text-dark-on-surface">Seat Allocation Engine</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <a href="../project-detail-modal/ProjectDetailModal.html" class="inline-flex items-center gap-1.5 font-label text-label-sm text-light-primary dark:text-dark-primary hover:underline font-semibold">
+              <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+              <span>Previous Project: Weather Forecast Suite</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Theme Script -->
+  <script>
+    (function() {
+      const toggleBtn = document.getElementById('modal-theme-toggle');
+      const lightIcon = document.getElementById('modal-theme-toggle-light-icon');
+      const darkIcon = document.getElementById('modal-theme-toggle-dark-icon');
+      const htmlEl = document.documentElement;
+
+      function updateIcons(isDark) {
+        if (isDark) {
+          lightIcon.classList.remove('hidden');
+          darkIcon.classList.add('hidden');
+        } else {
+          lightIcon.classList.add('hidden');
+          darkIcon.classList.remove('hidden');
+        }
+      }
+
+      updateIcons(htmlEl.classList.contains('dark'));
+
+      toggleBtn.addEventListener('click', function() {
+        const isDark = htmlEl.classList.toggle('dark');
+        updateIcons(isDark);
+      });
+    })();
+  </script>
+
+
+
+</body></html>

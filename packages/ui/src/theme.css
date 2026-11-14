@@ -1,0 +1,152 @@
+/*
+ * Design tokens for every frontend (design/corey_joseph_portfolio_design_system.md).
+ * Import AFTER `@import "tailwindcss";` in each app's entry stylesheet.
+ *
+ * Colors are semantic: write `bg-surface text-on-surface`, never `dark:` pairs.
+ * The `.dark` class on <html> swaps the underlying variables (see theme-init.ts).
+ */
+
+/* Let Tailwind find classes used inside this package's components. */
+@source "./";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --cj-primary: #1d4ed8;
+  --cj-on-primary: #ffffff;
+  --cj-surface: #f8fafc;
+  --cj-on-surface: #0f172a;
+  /* Review D2: secondary text gets its own token; outline is for borders only. */
+  --cj-on-surface-muted: #475569;
+  --cj-surface-container: #ffffff;
+  --cj-surface-container-high: #f1f5f9;
+  --cj-outline: #cbd5e1;
+  /* Review D3: darker text shades for small accent/success text on light surfaces. */
+  --cj-accent-ink: #0e7490;
+  --cj-success-ink: #047857;
+  color-scheme: light;
+}
+
+.dark {
+  --cj-primary: #60a5fa;
+  --cj-on-primary: #0b192c;
+  --cj-surface: #090d16;
+  --cj-on-surface: #f1f5f9;
+  --cj-on-surface-muted: #94a3b8;
+  --cj-surface-container: #111827;
+  --cj-surface-container-high: #1e293b;
+  --cj-outline: #334155;
+  --cj-accent-ink: #22d3ee;
+  --cj-success-ink: #34d399;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-primary: var(--cj-primary);
+  --color-on-primary: var(--cj-on-primary);
+  --color-surface: var(--cj-surface);
+  --color-on-surface: var(--cj-on-surface);
+  --color-on-surface-muted: var(--cj-on-surface-muted);
+  --color-surface-container: var(--cj-surface-container);
+  --color-surface-container-high: var(--cj-surface-container-high);
+  --color-outline: var(--cj-outline);
+  --color-accent-ink: var(--cj-accent-ink);
+  --color-success-ink: var(--cj-success-ink);
+}
+
+@theme {
+  /* Brand fills, same in both modes. Use the *-ink tokens for small text. */
+  --color-accent: #0891b2;
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-error: #dc2626;
+
+  /* Typography (review D4: mono is wired). */
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Red Hat Text", ui-sans-serif, system-ui, sans-serif;
+  --font-headline: "Red Hat Text", ui-sans-serif, system-ui, sans-serif;
+  --font-label: "Red Hat Text", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Source Code Pro", ui-monospace, SFMono-Regular, monospace;
+
+  --text-display-lg: 48px;
+  --text-display-lg--line-height: 56px;
+  --text-display-lg--letter-spacing: -1px;
+  --text-display-lg--font-weight: 700;
+  --text-display-lg-mobile: 32px;
+  --text-display-lg-mobile--line-height: 40px;
+  --text-display-lg-mobile--letter-spacing: -0.5px;
+  --text-display-lg-mobile--font-weight: 700;
+  --text-headline-lg: 36px;
+  --text-headline-lg--line-height: 44px;
+  --text-headline-lg--letter-spacing: -0.5px;
+  --text-headline-lg--font-weight: 700;
+  --text-headline-lg-mobile: 28px;
+  --text-headline-lg-mobile--line-height: 36px;
+  --text-headline-lg-mobile--letter-spacing: -0.25px;
+  --text-headline-lg-mobile--font-weight: 700;
+  --text-headline-md: 24px;
+  --text-headline-md--line-height: 32px;
+  --text-headline-md--letter-spacing: -0.25px;
+  --text-headline-md--font-weight: 600;
+  --text-headline-sm: 20px;
+  --text-headline-sm--line-height: 28px;
+  --text-headline-sm--font-weight: 600;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 28px;
+  --text-body-md: 16px;
+  --text-body-md--line-height: 24px;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 20px;
+  --text-label-lg: 15px;
+  --text-label-lg--line-height: 22px;
+  --text-label-lg--font-weight: 600;
+  --text-label-md: 13px;
+  --text-label-md--line-height: 18px;
+  --text-label-md--font-weight: 500;
+  --text-label-sm: 12px;
+  --text-label-sm--line-height: 16px;
+  --text-label-sm--font-weight: 500;
+
+  /* 8px modular spacing names; Tailwind's numeric scale still works too. */
+  --spacing-gutter-xs: 4px;
+  --spacing-gutter-sm: 8px;
+  --spacing-gutter-md: 16px;
+  --spacing-gutter-lg: 24px;
+  --spacing-gutter-xl: 32px;
+  --spacing-section: 64px;
+  --spacing-page-margin: 24px;
+
+  /* Review D9: 1200px page width. */
+  --container-page: 1200px;
+
+  /* Sharp, flat corners: no rounded-* scale exists (rounded-full still works). */
+  --radius-*: initial;
+
+  /* Motion: state-change by default; surface-enter/exit as named easings. */
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  html {
+    background-color: var(--color-surface);
+    color: var(--color-on-surface);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Review D10: smooth anchor scrolling only when motion is welcome. */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  ::selection {
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+}

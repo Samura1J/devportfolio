@@ -1,0 +1,385 @@
+<!DOCTYPE html><html lang="en" class="scroll-smooth"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Corey Joseph — Mobile Portfolio</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'accent': '#0891B2',
+        'success': '#059669',
+        'warning': '#D97706',
+        'error': '#DC2626',
+        'light-primary': '#1D4ED8',
+        'light-on-primary': '#FFFFFF',
+        'light-surface': '#F8FAFC',
+        'light-on-surface': '#0F172A',
+        'light-surface-container': '#FFFFFF',
+        'light-surface-container-high': '#F1F5F9',
+        'light-outline': '#CBD5E1',
+        'dark-primary': '#60A5FA',
+        'dark-on-primary': '#0B192C',
+        'dark-surface': '#090D16',
+        'dark-on-surface': '#F1F5F9',
+        'dark-surface-container': '#111827',
+        'dark-surface-container-high': '#1E293B',
+        'dark-outline': '#334155',
+      },
+      borderRadius: {
+        'sm': '0px',
+        'DEFAULT': '0px',
+        'md': '0px',
+        'lg': '0px',
+        'xl': '0px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '16px',
+        'gutter-lg': '24px',
+        'gutter-xl': '32px',
+        'section': '64px',
+        'page-margin': '24px',
+      },
+      fontFamily: {
+        'display': ['"Red Hat Text"', 'sans-serif'],
+        'headline': ['"Red Hat Text"', 'sans-serif'],
+        'body': ['"Instrument Sans"', 'sans-serif'],
+        'label': ['"Red Hat Text"', 'sans-serif'],
+      },
+      fontSize: {
+        'display-lg': ['48px', { lineHeight: '56px', letterSpacing: '-1px', fontWeight: '700' }],
+        'display-lg-mobile': ['32px', { lineHeight: '40px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'headline-lg': ['36px', { lineHeight: '44px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'headline-lg-mobile': ['28px', { lineHeight: '36px', letterSpacing: '-0.25px', fontWeight: '700' }],
+        'headline-md': ['24px', { lineHeight: '32px', letterSpacing: '-0.25px', fontWeight: '600' }],
+        'headline-sm': ['20px', { lineHeight: '28px', fontWeight: '600' }],
+        'body-lg': ['18px', { lineHeight: '28px', fontWeight: '400' }],
+        'body-md': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+        'body-sm': ['14px', { lineHeight: '20px', fontWeight: '400' }],
+        'label-lg': ['15px', { lineHeight: '22px', fontWeight: '600' }],
+        'label-md': ['13px', { lineHeight: '18px', fontWeight: '500' }],
+        'label-sm': ['12px', { lineHeight: '16px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '150ms',
+        'surface-enter': '240ms',
+        'surface-exit': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'surface-enter': '0ms',
+        'surface-exit': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'surface-enter': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'surface-exit': 'ease-in',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@500;600;700&amp;family=Instrument+Sans:wght@400;500;600&amp;family=Source+Code+Pro:wght@500;600&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+</head>
+<body class="bg-light-surface text-light-on-surface dark:bg-dark-surface dark:text-dark-on-surface min-h-[884px] font-body antialiased selection:bg-light-primary selection:text-light-on-primary dark:selection:bg-dark-primary dark:selection:text-dark-on-primary pb-20" data-stitch-vh="min-h-[884px]===min-h-screen">
+
+  <!-- Mobile Sticky Header -->
+  <header class="sticky top-0 z-50 w-full border-b border-light-outline/70 dark:border-dark-outline/50 bg-light-surface/95 dark:bg-dark-surface/90 backdrop-blur-md">
+    <div class="px-4 h-16 flex items-center justify-between">
+      <a href="#hero" class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-none bg-light-surface-container dark:bg-dark-surface-container-high border border-light-outline dark:border-dark-outline/60 flex items-center justify-center font-headline font-bold text-light-primary dark:text-dark-primary text-sm">
+          CJ
+        </div>
+        <div>
+          <span class="block font-headline text-sm font-bold tracking-tight text-light-on-surface dark:text-dark-on-surface leading-tight">Corey Joseph</span>
+          <span class="block font-mono text-[10px] text-light-on-surface/60 dark:text-dark-outline leading-none">Full Stack &amp; Frontend</span>
+        </div>
+      </a>
+
+      <!-- Quick Actions: Theme Toggle + Contact CTA -->
+      <div class="flex items-center gap-2">
+        <button id="mobile-theme-toggle" type="button" aria-label="Toggle theme" class="w-8 h-8 rounded-none border border-light-outline dark:border-dark-outline/60 bg-light-surface-container dark:bg-dark-surface-container flex items-center justify-center text-light-on-surface dark:text-dark-on-surface hover:border-light-primary transition-colors">
+          <span id="mobile-theme-light-icon" class="material-symbols-outlined text-[17px] hidden">light_mode</span>
+          <span id="mobile-theme-dark-icon" class="material-symbols-outlined text-[17px]">dark_mode</span>
+        </button>
+
+        <a href="#contact" class="px-3 py-1.5 rounded-none bg-light-primary text-light-on-primary dark:bg-dark-primary dark:text-dark-on-primary font-label text-xs font-semibold hover:opacity-90 transition-all shadow-sm">
+          <span>Connect</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Main Content Container -->
+  <main class="px-4 py-6 space-y-12">
+
+    <!-- HERO SECTION -->
+    <section id="hero" class="space-y-4">
+      
+      <!-- Availability Badge -->
+      <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-none bg-light-surface-container dark:bg-dark-surface-container border border-light-outline dark:border-dark-outline/60 font-label text-[11px] text-light-on-surface dark:text-dark-on-surface">
+        <span class="w-2 h-2 bg-success animate-pulse inline-block" aria-hidden="true"></span>
+        <span>Open to Roles &amp; Freelance Work</span>
+      </div>
+
+      <!-- Hero Headline using -mobile typography token -->
+      <h1 class="font-headline text-display-lg-mobile text-light-on-surface dark:text-dark-on-surface font-bold tracking-tight text-balance leading-tight">
+        Building responsive web apps with full-stack scalability.
+      </h1>
+
+      <p class="font-body text-body-sm text-light-on-surface/85 dark:text-dark-on-surface/85 leading-relaxed">
+        I’m <strong class="text-light-on-surface dark:text-white font-semibold">Corey Joseph</strong>, combining React interfaces with modern Node &amp; database backend architectures for product teams.
+      </p>
+
+      <!-- Mobile CTAs -->
+      <div class="flex flex-col gap-2.5 pt-1">
+        <a href="#projects" class="w-full py-2.5 px-4 rounded-none bg-light-primary text-light-on-primary dark:bg-dark-primary dark:text-dark-on-primary font-label text-sm font-semibold hover:opacity-95 transition-all text-center flex items-center justify-center gap-1.5 shadow-sm">
+          <span>Explore Selected Projects</span>
+          <span class="material-symbols-outlined text-[18px]">south</span>
+        </a>
+        <div class="grid grid-cols-2 gap-2">
+          <a href="https://github.com/Samura1J" target="_blank" rel="noopener noreferrer" class="py-2 px-3 rounded-none bg-light-surface-container dark:bg-dark-surface-container border border-light-outline dark:border-dark-outline/60 text-light-on-surface dark:text-dark-on-surface font-label text-xs font-semibold flex items-center justify-center gap-1.5">
+            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"></path></svg>
+            <span>GitHub</span>
+          </a>
+          <a href="https://www.linkedin.com/in/corey-joseph-5517a917/" target="_blank" rel="noopener noreferrer" class="py-2 px-3 rounded-none bg-light-surface-container dark:bg-dark-surface-container border border-light-outline dark:border-dark-outline/60 text-light-on-surface dark:text-dark-on-surface font-label text-xs font-semibold flex items-center justify-center gap-1.5">
+            <svg class="w-3.5 h-3.5 fill-current text-light-primary dark:text-dark-primary" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"></path></svg>
+            <span>LinkedIn</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Strip -->
+      <div class="grid grid-cols-3 gap-2 pt-3 border-t border-light-outline/70 dark:border-dark-outline/40 text-center">
+        <div class="p-2 bg-light-surface-container dark:bg-dark-surface-container border border-light-outline/60 dark:border-dark-outline/40">
+          <div class="font-headline text-sm font-bold text-light-on-surface dark:text-dark-on-surface">React</div>
+          <div class="font-mono text-[10px] text-light-on-surface/60 dark:text-dark-outline">Frontend</div>
+        </div>
+        <div class="p-2 bg-light-surface-container dark:bg-dark-surface-container border border-light-outline/60 dark:border-dark-outline/40">
+          <div class="font-headline text-sm font-bold text-accent">Full Stack</div>
+          <div class="font-mono text-[10px] text-light-on-surface/60 dark:text-dark-outline">APIs / DBs</div>
+        </div>
+        <div class="p-2 bg-light-surface-container dark:bg-dark-surface-container border border-light-outline/60 dark:border-dark-outline/40">
+          <div class="font-headline text-sm font-bold text-success">100%</div>
+          <div class="font-mono text-[10px] text-light-on-surface/60 dark:text-dark-outline">Delivery</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROJECTS SECTION -->
+    <section id="projects" class="space-y-4">
+      <div class="border-b border-light-outline/70 dark:border-dark-outline/40 pb-3">
+        <span class="font-mono text-[11px] text-accent tracking-wider uppercase font-semibold">Featured Work</span>
+        <h2 class="font-headline text-headline-sm font-bold text-light-on-surface dark:text-dark-on-surface mt-0.5">Projects &amp; Case Studies</h2>
+      </div>
+
+      <div class="space-y-4">
+
+        <!-- PROJECT 1 CARD -->
+        <article class="p-4 rounded-none bg-light-surface-container dark:bg-dark-surface-container border border-light-outline dark:border-dark-outline/60 space-y-3.5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 bg-light-surface-container-high dark:bg-dark-surface-container-high text-accent font-mono text-[11px] font-semibold">React App</span>
+            <span class="font-mono text-[10px] text-light-on-surface/50 dark:text-dark-outline">7timer API</span>
+          </div>
+
+          <div>
+            <h3 class="font-headline text-base font-bold text-light-on-surface dark:text-dark-on-surface">European Weather Forecast Suite</h3>
+            <p class="font-body text-xs text-light-on-surface/80 dark:text-dark-on-surface/80 mt-1 leading-relaxed">
+              Multi-city meteorological suite with coordinate normalization, decoupled data ingest, and zero-stalls error handling.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5 pt-0.5">
+            <span class="px-2 py-0.5 rounded-none bg-light-surface dark:bg-dark-surface border border-light-outline/70 dark:border-dark-outline/50 font-mono text-[10px]">React 18</span>
+            <span class="px-2 py-0.5 rounded-none bg-light-surface dark:bg-dark-surface border border-light-outline/70 dark:border-dark-outline/50 font-mono text-[10px]">REST Ingest</span>
+            <span class="px-2 py-0.5 rounded-none bg-light-surface dark:bg-dark-surface border border-light-outline/70 dark:border-dark-outline/50 font-mono text-[10px]">Tailwind</span>
+          </div>
+
+          <div class="pt-3 border-t border-light-outline/60 dark:border-dark-outline/40 flex items-center justify-between gap-2">
+            <a href="../project-detail-modal/ProjectDetailModal.html" class="w-full py-2 px-3 rounded-none bg-light-primary text-light-on-primary dark:bg-dark-primary dark:text-dark-on-primary font-label text-xs font-semibold text-center flex items-center justify-center gap-1 shadow-sm">
+              <span>View Case Study</span>
+              <span class="material-symbols-outlined text-[15px]">visibility</span>
+            </a>
+            <a href="https://coreyjoseph.me/projects/weatherappv2" target="_blank" rel="noopener noreferrer" class="py-2 px-3 rounded-none bg-light-surface dark:bg-dark-surface border border-light-outline dark:border-dark-outline/60 font-label text-xs font-semibold text-light-on-surface dark:text-dark-on-surface whitespace-nowrap flex items-center gap-1">
+              <span>Live</span>
+              <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+            </a>
+          </div>
+        </article>
+
+        <!-- PROJECT 2 CARD -->
+        <article class="p-4 rounded-none bg-light-surface-container dark:bg-dark-surface-container border border-light-outline dark:border-dark-outline/60 space-y-3.5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 bg-light-surface-container-high dark:bg-dark-surface-container-high text-accent font-mono text-[11px] font-semibold">React State</span>
+            <span class="font-mono text-[10px] text-light-on-surface/50 dark:text-dark-outline">Grid Matrix</span>
+          </div>
+
+          <div>
+            <h3 class="font-headline text-base font-bold text-light-on-surface dark:text-dark-on-surface">Seat Allocation Engine</h3>
+            <p class="font-body text-xs text-light-on-surface/80 dark:text-dark-on-surface/80 mt-1 leading-relaxed">
+              Dynamic theater seat matrix supporting tier valuation, isolated node re-renders, and reservation locks.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5 pt-0.5">
+            <span class="px-2 py-0.5 rounded-none bg-light-surface dark:bg-dark-surface border border-light-outline/70 dark:border-dark-outline/50 font-mono text-[10px]">React Hooks</span>
+            <span class="px-2 py-0.5 rounded-none bg-light-surface dark:bg-dark-surface border border-light-outline/70 dark:border-dark-outline/50 font-mono text-[10px]">CSS Grid</span>
+            <span class="px-2 py-0.5 rounded-none bg-light-surface dark:bg-dark-surface border border-light-outline/70 dark:border-dark-outline/50 font-mono text-[10px]">State Reducer</span>
+          </div>
+
+          <div class="pt-3 border-t border-light-outline/60 dark:border-dark-outline/40 flex items-center justify-between gap-2">
+            <a href="../project-detail-seatpicker/SeatPickerModal.html" class="w-full py-2 px-3 rounded-none bg-light-primary text-light-on-primary dark:bg-dark-primary dark:text-dark-on-primary font-label text-xs font-semibold text-center flex items-center justify-center gap-1 shadow-sm">
+              <span>View Case Study</span>
+              <span class="material-symbols-outlined text-[15px]">visibility</span>
+            </a>
+            <a href="https://coreyjoseph.me/projects/seatpicker" target="_blank" rel="noopener noreferrer" class="py-2 px-3 rounded-none bg-light-surface dark:bg-dark-surface border border-light-outline dark:border-dark-outline/60 font-label text-xs font-semibold text-light-on-surface dark:text-dark-on-surface whitespace-nowrap flex items-center gap-1">
+              <span>Live</span>
+              <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+            </a>
+          </div>
+        </article>
+
+        <!-- BACKEND ROADMAP TEASER -->
+        <div class="p-3.5 rounded-none border border-dashed border-light-outline dark:border-dark-outline/60 bg-light-surface-container dark:bg-dark-surface-container/50 space-y-1.5">
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-accent text-[17px]">storage</span>
+            <span class="font-headline text-xs font-semibold text-light-on-surface dark:text-dark-on-surface">Currently Building: Full-Stack SaaS MVP</span>
+          </div>
+          <p class="font-body text-[11px] text-light-on-surface/70 dark:text-dark-outline">
+            Node.js + Express REST API with PostgreSQL database, auth middleware, and React frontend dashboard.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TECHNICAL STACK SECTION -->
+    <section id="capabilities" class="space-y-4">
+      <div class="border-b border-light-outline/70 dark:border-dark-outline/40 pb-3">
+        <span class="font-mono text-[11px] text-accent tracking-wider uppercase font-semibold">Capabilities</span>
+        <h2 class="font-headline text-headline-sm font-bold text-light-on-surface dark:text-dark-on-surface mt-0.5">Core Technical Stack</h2>
+      </div>
+
+      <div class="space-y-3">
+        <div class="p-3.5 rounded-none bg-light-surface-container dark:bg-dark-surface-container border border-light-outline dark:border-dark-outline/50 space-y-2">
+          <div class="flex items-center gap-2 font-headline text-xs font-semibold text-light-on-surface dark:text-dark-on-surface">
+            <span class="material-symbols-outlined text-light-primary dark:text-dark-primary text-[18px]">devices</span>
+            <span>Frontend Architecture</span>
+          </div>
+          <p class="font-body text-xs text-light-on-surface/70 dark:text-dark-outline">
+            React 18, JavaScript ES6+, TypeScript, Tailwind CSS, Responsive Design.
+          </p>
+        </div>
+
+        <div class="p-3.5 rounded-none bg-light-surface-container dark:bg-dark-surface-container border border-light-outline dark:border-dark-outline/50 space-y-2">
+          <div class="flex items-center gap-2 font-headline text-xs font-semibold text-light-on-surface dark:text-dark-on-surface">
+            <span class="material-symbols-outlined text-accent text-[18px]">dns</span>
+            <span>Backend &amp; Database Growth</span>
+          </div>
+          <p class="font-body text-xs text-light-on-surface/70 dark:text-dark-outline">
+            RESTful API consumption, Node.js, Express, PostgreSQL, Authentication.
+          </p>
+        </div>
+
+        <div class="p-3.5 rounded-none bg-light-surface-container dark:bg-dark-surface-container border border-light-outline dark:border-dark-outline/50 space-y-2">
+          <div class="flex items-center gap-2 font-headline text-xs font-semibold text-light-on-surface dark:text-dark-on-surface">
+            <span class="material-symbols-outlined text-warning text-[18px]">speed</span>
+            <span>Workflow &amp; Rigor</span>
+          </div>
+          <p class="font-body text-xs text-light-on-surface/70 dark:text-dark-outline">
+            Git/GitHub collaboration, Vite build tooling, cross-browser consistency, Web Vitals.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT / INQUIRY SECTION -->
+    <section id="contact" class="p-4 rounded-none bg-light-surface-container dark:bg-dark-surface-container border border-light-outline dark:border-dark-outline/60 space-y-4">
+      <div>
+        <span class="font-mono text-[11px] text-accent tracking-wider uppercase font-semibold">Let’s Connect</span>
+        <h2 class="font-headline text-base font-bold text-light-on-surface dark:text-dark-on-surface mt-0.5">Start a Conversation</h2>
+        <p class="font-body text-xs text-light-on-surface/70 dark:text-dark-outline mt-1">
+          Open to engineering roles and contract builds.
+        </p>
+      </div>
+
+      <form onsubmit="event.preventDefault(); alert(&#39;Message simulation sent! Connect on LinkedIn or email directly.&#39;);" class="space-y-3">
+        <div>
+          <label class="block font-label text-[11px] text-light-on-surface dark:text-dark-on-surface mb-1">Your Name</label>
+          <input type="text" required placeholder="Jane Doe" class="w-full px-3 py-2 rounded-none bg-light-surface dark:bg-dark-surface border border-light-outline dark:border-dark-outline/60 text-xs text-light-on-surface dark:text-dark-on-surface focus:outline-none focus:border-light-primary">
+        </div>
+        <div>
+          <label class="block font-label text-[11px] text-light-on-surface dark:text-dark-on-surface mb-1">Email</label>
+          <input type="email" required placeholder="name@company.com" class="w-full px-3 py-2 rounded-none bg-light-surface dark:bg-dark-surface border border-light-outline dark:border-dark-outline/60 text-xs text-light-on-surface dark:text-dark-on-surface focus:outline-none focus:border-light-primary">
+        </div>
+        <div>
+          <label class="block font-label text-[11px] text-light-on-surface dark:text-dark-on-surface mb-1">Message</label>
+          <textarea rows="3" required placeholder="Tell me about your role or project..." class="w-full px-3 py-2 rounded-none bg-light-surface dark:bg-dark-surface border border-light-outline dark:border-dark-outline/60 text-xs text-light-on-surface dark:text-dark-on-surface focus:outline-none focus:border-light-primary"></textarea>
+        </div>
+        <button type="submit" class="w-full py-2.5 px-4 rounded-none bg-light-primary text-light-on-primary dark:bg-dark-primary dark:text-dark-on-primary font-label text-xs font-semibold shadow-sm flex items-center justify-center gap-1.5">
+          <span>Send Inquiry</span>
+          <span class="material-symbols-outlined text-[16px]">send</span>
+        </button>
+      </form>
+    </section>
+
+  </main>
+
+  <!-- Mobile Bottom Sticky Bar -->
+  <nav class="fixed bottom-0 inset-x-0 z-50 h-14 bg-light-surface/95 dark:bg-dark-surface/95 border-t border-light-outline/70 dark:border-dark-outline/50 backdrop-blur-md flex items-center justify-around px-2 text-center font-label text-[11px]">
+    <a href="#hero" class="flex flex-col items-center gap-0.5 text-light-on-surface/70 dark:text-dark-outline hover:text-light-primary">
+      <span class="material-symbols-outlined text-[18px]">home</span>
+      <span>Top</span>
+    </a>
+    <a href="#projects" class="flex flex-col items-center gap-0.5 text-light-on-surface/70 dark:text-dark-outline hover:text-light-primary">
+      <span class="material-symbols-outlined text-[18px]">folder</span>
+      <span>Projects</span>
+    </a>
+    <a href="#capabilities" class="flex flex-col items-center gap-0.5 text-light-on-surface/70 dark:text-dark-outline hover:text-light-primary">
+      <span class="material-symbols-outlined text-[18px]">terminal</span>
+      <span>Skills</span>
+    </a>
+    <a href="#contact" class="flex flex-col items-center gap-0.5 text-light-primary dark:text-dark-primary font-semibold">
+      <span class="material-symbols-outlined text-[18px]">mail</span>
+      <span>Contact</span>
+    </a>
+  </nav>
+
+  <!-- Theme Toggle Script -->
+  <script>
+    (function() {
+      const toggleBtn = document.getElementById('mobile-theme-toggle');
+      const lightIcon = document.getElementById('mobile-theme-light-icon');
+      const darkIcon = document.getElementById('mobile-theme-dark-icon');
+      const htmlEl = document.documentElement;
+
+      function updateIcons(isDark) {
+        if (isDark) {
+          lightIcon.classList.remove('hidden');
+          darkIcon.classList.add('hidden');
+        } else {
+          lightIcon.classList.add('hidden');
+          darkIcon.classList.remove('hidden');
+        }
+      }
+
+      updateIcons(htmlEl.classList.contains('dark'));
+
+      toggleBtn.addEventListener('click', function() {
+        const isDark = htmlEl.classList.toggle('dark');
+        updateIcons(isDark);
+      });
+    })();
+  </script>
+
+
+
+</body></html>
