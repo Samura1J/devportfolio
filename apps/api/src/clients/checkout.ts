@@ -42,33 +42,49 @@ const outcomeOf = (session: Stripe.Checkout.Session): SessionOutcome => {
 /** What a verified Stripe webhook means for a seat hold, if anything. */
 export type PaymentEvent = { kind: "paid" | "unpaid"; sessionId: string } | { kind: "ignored" };
 
+/** The Stripe Checkout session for one order. */
+export function sessionParams({
+  movie,
+  seats,
+  successUrl,
+  cancelUrl,
+  holdId,
+  expiresAt,
+}: CreateSessionInput): Stripe.Checkout.SessionCreateParams {
+  return {
+    mode: "payment",
+    // Cards only (wallets like Apple Pay and Google Pay count as cards): they
+    // settle at once. Delayed methods such as bank debits would leave seats
+    // held for days while the payment clears.
+    allowed_payment_method_types: ["card"],
+    // Price is built here from the shared constant: the client never sends one,
+    // and no Stripe product/price objects pile up per checkout.
+    line_items: [
+      {
+        quantity: seats.length,
+        price_data: {
+          currency: CURRENCY,
+          unit_amount: TICKET_PRICE_CENTS,
+          product_data: { name: `Ticket: ${movie.title}`, description: `Seats ${seats.join(", ")}` },
+        },
+      },
+    ],
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    // Stripe refuses payment after this, so the seat hold can end then too.
+    expires_at: Math.floor(expiresAt / 1000),
+    metadata: { movieId: String(movie.id), movieTitle: movie.title, seats: seats.join(","), holdId },
+  };
+}
+
 export function createStripeGateway(secretKey: string): CheckoutGateway {
   const stripe = new Stripe(secretKey, { maxNetworkRetries: 1, timeout: 10_000 });
 
   return {
-    async createSession({ movie, seats, successUrl, cancelUrl, holdId, expiresAt }) {
+    async createSession(input) {
       let session: Stripe.Checkout.Session;
       try {
-        session = await stripe.checkout.sessions.create({
-          mode: "payment",
-          // Price is built here from the shared constant: the client never sends one,
-          // and no Stripe product/price objects pile up per checkout.
-          line_items: [
-            {
-              quantity: seats.length,
-              price_data: {
-                currency: CURRENCY,
-                unit_amount: TICKET_PRICE_CENTS,
-                product_data: { name: `Ticket: ${movie.title}`, description: `Seats ${seats.join(", ")}` },
-              },
-            },
-          ],
-          success_url: successUrl,
-          cancel_url: cancelUrl,
-          // Stripe refuses payment after this, so the seat hold can end then too.
-          expires_at: Math.floor(expiresAt / 1000),
-          metadata: { movieId: String(movie.id), movieTitle: movie.title, seats: seats.join(","), holdId },
-        });
+        session = await stripe.checkout.sessions.create(sessionParams(input));
       } catch (error) {
         throw new UpstreamError("Stripe", errorDetail(error));
       }

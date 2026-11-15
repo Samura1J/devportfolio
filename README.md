@@ -66,7 +66,7 @@ Only the API reads environment variables, from `apps/api/.env`. The Node flag `-
 
 ### Trying a payment
 
-Checkout always runs in Stripe test mode. Pay with card `4242 4242 4242 4242`, any future expiry date and any CVC.
+Checkout always runs in Stripe test mode and takes cards only (wallets like Apple Pay and Google Pay included), since those settle at once. Pay with card `4242 4242 4242 4242`, any future expiry date and any CVC.
 
 Webhooks are optional. Without them, a payment is confirmed when the buyer reaches the success page, or when the seat hold expires (the API then asks Stripe). To receive real webhooks locally, run the [Stripe CLI](https://docs.stripe.com/stripe-cli):
 
