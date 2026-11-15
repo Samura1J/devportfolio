@@ -13,6 +13,12 @@ const KEEP_DAYS = 1;
 /** A delayed payment can take days; its webhook settles it, and Stripe is asked again this often. */
 const PENDING_RECHECK_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
+/**
+ * Unpaid checkouts one IP can have open at once. Holds belong to a browser
+ * cookie, so a whole office behind one address can buy at the same time, but
+ * clearing cookies mustn't let one person hold the whole theater.
+ */
+export const MAX_OPEN_CHECKOUTS_PER_IP = 5;
 
 const utcDate = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
@@ -22,8 +28,10 @@ export const showingFor = (movieId: number, now: number) => `${String(movieId)}@
 export interface CheckoutInput {
   movie: Movie;
   seats: SeatId[];
-  /** Who is buying: the client IP. One unpaid checkout per owner at a time. */
+  /** Who is buying: a per-browser id from a cookie. One unpaid checkout per owner at a time. */
   owner: string;
+  /** The client IP; caps open checkouts per address. */
+  ip: string;
   successUrl: string;
   cancelUrl: string;
 }
@@ -102,7 +110,7 @@ export function createBookings({ store, gateway, now = Date.now, log = console.w
       return store.takenSeats(showingFor(movieId, now()), owner);
     },
 
-    async checkout({ movie, seats, owner, successUrl, cancelUrl }) {
+    async checkout({ movie, seats, owner, ip, successUrl, cancelUrl }) {
       await reconcileExpired();
 
       // A visitor going back to change seats shouldn't be blocked by their own
@@ -112,6 +120,14 @@ export function createBookings({ store, gateway, now = Date.now, log = console.w
         await resolveWithStripe(holdId, sessionId);
       }
 
+      if (store.openHoldCount(ip) >= MAX_OPEN_CHECKOUTS_PER_IP) {
+        throw new HttpError(
+          429,
+          "too_many_checkouts",
+          "Too many checkouts are open from your network. Finish or cancel one, or try again in half an hour.",
+        );
+      }
+
       const holdId = randomUUID();
       const sessionExpiresAt = now() + SESSION_MINUTES * 60 * 1000;
       const held = store.hold({
@@ -119,6 +135,7 @@ export function createBookings({ store, gateway, now = Date.now, log = console.w
         showing: showingFor(movie.id, now()),
         seats,
         owner,
+        ip,
         expiresAt: sessionExpiresAt + HOLD_GRACE_MS,
       });
       if (!held.ok) throw new SeatsTakenError(held.taken);

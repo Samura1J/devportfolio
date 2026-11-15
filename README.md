@@ -78,7 +78,7 @@ Put the `whsec_…` secret it prints in `STRIPE_WEBHOOK_SECRET`, then restart th
 
 ### Double-booking protection
 
-Starting a checkout holds the seats in SQLite for the life of the Stripe session (31 minutes). Anyone else trying for those seats gets a 409 that names them, and the seat map marks taken seats. Holds belong to the visitor's IP address, so two tabs in the same browser count as one buyer: the newer checkout replaces the older one. Each movie starts the day (UTC) with an empty theater.
+Starting a checkout holds the seats in SQLite for the life of the Stripe session (31 minutes). Anyone else trying for those seats gets a 409 that names them, and the seat map marks taken seats. Holds belong to the browser, through a random id in an HttpOnly `seat_visitor` cookie. Two tabs in the same browser are one buyer, so the newer checkout replaces the older one; people on a shared network (an office, a campus) don't affect each other. One IP address can have at most 5 checkouts open at once, so clearing cookies can't be used to hold the whole theater. Each movie starts the day (UTC) with an empty theater.
 
 ## Project notes
 

@@ -6,13 +6,14 @@ import {
   type Movie,
   type SeatAvailability,
 } from "@portfolio/shared";
-import { Router, type Request } from "express";
+import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import type { CheckoutGateway } from "../clients/checkout";
 import type { MovieCatalog } from "../clients/tmdb";
 import type { Config } from "../config";
 import { HttpError, notConfigured, parseInput } from "../lib/errors";
 import { rateLimit, type RateLimitOptions } from "../lib/rateLimit";
+import { visitorId } from "../lib/visitor";
 import type { Bookings } from "../seats/bookings";
 
 interface SeatpickerDeps {
@@ -25,8 +26,10 @@ interface SeatpickerDeps {
 
 const MovieIdParamSchema = z.coerce.number<string>().int().positive();
 
-/** Seat holds belong to the visitor's IP (trust proxy is set for the dev proxy and nginx). */
-const ownerOf = (req: Request) => req.ip ?? "unknown";
+/** The client IP (trust proxy is set for the dev proxy and nginx). */
+const ipOf = (req: Request) => req.ip ?? "unknown";
+/** Seat holds belong to a per-browser cookie. */
+const ownerOf = (req: Request, res: Response) => visitorId(req, res);
 
 export function seatpickerRouter({ config, movies, checkout, bookings, checkoutLimit }: SeatpickerDeps): Router {
   const router = Router();
@@ -50,7 +53,7 @@ export function seatpickerRouter({ config, movies, checkout, bookings, checkoutL
   router.get("/movies/:movieId/seats", async (req, res) => {
     if (!bookings) throw notConfigured("Checkout");
     const movie = await showingMovie(parseInput(MovieIdParamSchema, req.params.movieId));
-    const body: SeatAvailability = { taken: await bookings.takenSeats(movie.id, ownerOf(req)) };
+    const body: SeatAvailability = { taken: await bookings.takenSeats(movie.id, ownerOf(req, res)) };
     res.json(body);
   });
 
@@ -70,7 +73,8 @@ export function seatpickerRouter({ config, movies, checkout, bookings, checkoutL
       const session = await bookings.checkout({
         movie,
         seats,
-        owner: ownerOf(req),
+        owner: ownerOf(req, res),
+        ip: ipOf(req),
         // Stripe fills in {CHECKOUT_SESSION_ID}; it must stay unencoded.
         successUrl: `${appBase}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${appBase}/cancel?${backToSeats.toString()}`,

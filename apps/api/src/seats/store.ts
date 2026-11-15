@@ -14,6 +14,7 @@ const SCHEMA = `
     seat       TEXT    NOT NULL,
     hold_id    TEXT    NOT NULL,
     owner      TEXT    NOT NULL,
+    ip         TEXT    NOT NULL DEFAULT '',
     status     TEXT    NOT NULL CHECK (status IN ('held', 'sold')),
     session_id TEXT,
     expires_at INTEGER NOT NULL,
@@ -22,6 +23,12 @@ const SCHEMA = `
   CREATE INDEX IF NOT EXISTS seat_holds_hold ON seat_holds (hold_id);
   CREATE INDEX IF NOT EXISTS seat_holds_session ON seat_holds (session_id);
 `;
+
+/** Adds columns introduced after a database file was first created. */
+function migrate(db: DatabaseSync) {
+  const columns = db.prepare("SELECT name FROM pragma_table_info('seat_holds')").all().map((row) => row.name);
+  if (!columns.includes("ip")) db.exec("ALTER TABLE seat_holds ADD COLUMN ip TEXT NOT NULL DEFAULT ''");
+}
 
 export interface Hold {
   holdId: string;
@@ -37,6 +44,8 @@ export interface SeatStore {
     showing: string;
     seats: readonly SeatId[];
     owner: string;
+    /** The client IP, to cap how many checkouts one address can have open. */
+    ip: string;
     expiresAt: number;
   }): { ok: true } | { ok: false; taken: SeatId[] };
   /** False when the hold is gone (released by a newer checkout meanwhile). */
@@ -48,6 +57,8 @@ export interface SeatStore {
   release(holdId: string): void;
   /** Unpaid holds belonging to `owner`. */
   pendingHolds(owner: string): Hold[];
+  /** How many unpaid holds came from `ip`, across all owners. */
+  openHoldCount(ip: string): number;
   /** Unpaid holds whose time ran out and still need resolving. */
   expiredHolds(now: number): Hold[];
   /** Daily reset: drops every row for showings dated before `date` (YYYY-MM-DD). */
@@ -61,6 +72,7 @@ export function openSeatStore(path: string): SeatStore {
   const db = new DatabaseSync(path);
   db.exec("PRAGMA journal_mode = WAL;");
   db.exec(SCHEMA);
+  migrate(db);
 
   const statements = {
     taken: db.prepare(
@@ -71,8 +83,8 @@ export function openSeatStore(path: string): SeatStore {
       `SELECT seat FROM seat_holds WHERE showing = :showing AND seat IN (SELECT value FROM json_each(:seats))`,
     ),
     insert: db.prepare(
-      `INSERT INTO seat_holds (showing, seat, hold_id, owner, status, expires_at)
-       VALUES (:showing, :seat, :holdId, :owner, 'held', :expiresAt)`,
+      `INSERT INTO seat_holds (showing, seat, hold_id, owner, ip, status, expires_at)
+       VALUES (:showing, :seat, :holdId, :owner, :ip, 'held', :expiresAt)`,
     ),
     attach: db.prepare(`UPDATE seat_holds SET session_id = :sessionId WHERE hold_id = :holdId`),
     bySession: db.prepare(`SELECT hold_id FROM seat_holds WHERE session_id = :sessionId LIMIT 1`),
@@ -82,6 +94,7 @@ export function openSeatStore(path: string): SeatStore {
     pending: db.prepare(
       `SELECT DISTINCT hold_id, session_id FROM seat_holds WHERE owner = :owner AND status = 'held'`,
     ),
+    openByIp: db.prepare(`SELECT COUNT(DISTINCT hold_id) AS n FROM seat_holds WHERE ip = :ip AND status = 'held'`),
     expired: db.prepare(
       `SELECT DISTINCT hold_id, session_id FROM seat_holds WHERE status = 'held' AND expires_at <= :now`,
     ),
@@ -101,7 +114,7 @@ export function openSeatStore(path: string): SeatStore {
       return seatsOf(statements.taken.all({ showing, owner: exceptOwner ?? null }));
     },
 
-    hold({ holdId, showing, seats, owner, expiresAt }) {
+    hold({ holdId, showing, seats, owner, ip, expiresAt }) {
       // Node runs this synchronously, so nothing interleaves between the check
       // and the inserts; the primary key is the backstop either way.
       db.exec("BEGIN IMMEDIATE");
@@ -111,7 +124,7 @@ export function openSeatStore(path: string): SeatStore {
           db.exec("ROLLBACK");
           return { ok: false, taken };
         }
-        for (const seat of seats) statements.insert.run({ showing, seat, holdId, owner, expiresAt });
+        for (const seat of seats) statements.insert.run({ showing, seat, holdId, owner, ip, expiresAt });
         db.exec("COMMIT");
         return { ok: true };
       } catch (error) {
@@ -143,6 +156,10 @@ export function openSeatStore(path: string): SeatStore {
 
     pendingHolds(owner) {
       return holdsOf(statements.pending.all({ owner }));
+    },
+
+    openHoldCount(ip) {
+      return Number(statements.openByIp.get({ ip })?.n ?? 0);
     },
 
     expiredHolds(now) {

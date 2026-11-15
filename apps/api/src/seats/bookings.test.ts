@@ -1,12 +1,18 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { SeatId } from "@portfolio/shared";
 import { MOVIES, fakeGateway } from "../test/fakes";
-import { createBookings, SeatsTakenError, SESSION_MINUTES, showingFor } from "./bookings";
+import { createBookings, MAX_OPEN_CHECKOUTS_PER_IP, SeatsTakenError, SESSION_MINUTES, showingFor } from "./bookings";
 import { openSeatStore, type SeatStore } from "./store";
 
 const MOVIE = MOVIES[0] ?? { id: 101, title: "Future City", posterUrl: "https://image.tmdb.org/t/p/w500/a.jpg" };
 const URLS = { successUrl: "https://example.test/ok", cancelUrl: "https://example.test/cancel" };
 const T0 = Date.parse("2026-11-15T12:00:00Z");
 const MINUTE = 60 * 1000;
+const OFFICE_IP = "198.51.100.1";
 
 describe("seat store", () => {
   let store: SeatStore;
@@ -18,7 +24,7 @@ describe("seat store", () => {
   });
 
   const hold = (holdId: string, seats: ("1A" | "1B" | "2A")[], owner = "alice", showing = "101@2026-11-15") =>
-    store.hold({ holdId, showing, seats, owner, expiresAt: T0 + 30 * MINUTE });
+    store.hold({ holdId, showing, seats, owner, ip: OFFICE_IP, expiresAt: T0 + 30 * MINUTE });
 
   it("holds every seat or none, and reports which were taken", () => {
     expect(hold("h1", ["1A", "1B"])).toEqual({ ok: true });
@@ -57,6 +63,37 @@ describe("seat store", () => {
     expect(store.expiredHolds(T0 + 30 * MINUTE)).toEqual([{ holdId: "h1", sessionId: "cs_test_1" }]);
   });
 
+  it("counts open holds per IP, leaving out sales", () => {
+    hold("h1", ["1A", "1B"]);
+    hold("h2", ["2A"], "bob");
+    expect(store.openHoldCount(OFFICE_IP)).toBe(2);
+    store.markSold("h2");
+    expect(store.openHoldCount(OFFICE_IP)).toBe(1);
+    expect(store.openHoldCount("203.0.113.9")).toBe(0);
+  });
+
+  it("adds the ip column to a database made before it existed", () => {
+    const dir = mkdtempSync(join(tmpdir(), "seats-"));
+    try {
+      const path = join(dir, "seats.db");
+      const old = new DatabaseSync(path);
+      old.exec(`CREATE TABLE seat_holds (showing TEXT NOT NULL, seat TEXT NOT NULL, hold_id TEXT NOT NULL,
+        owner TEXT NOT NULL, status TEXT NOT NULL, session_id TEXT, expires_at INTEGER NOT NULL,
+        PRIMARY KEY (showing, seat))`);
+      old.exec(`INSERT INTO seat_holds VALUES ('101@2026-11-15', '3C', 'old', '203.0.113.1', 'sold', NULL, 0)`);
+      old.close();
+
+      const upgraded = openSeatStore(path);
+      expect(upgraded.takenSeats("101@2026-11-15")).toEqual(["3C"]);
+      expect(upgraded.hold({ holdId: "new", showing: "101@2026-11-15", seats: ["3D"], owner: "x", ip: OFFICE_IP, expiresAt: T0 }))
+        .toEqual({ ok: true });
+      expect(upgraded.openHoldCount(OFFICE_IP)).toBe(1);
+      upgraded.close();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it("clears showings before a date", () => {
     hold("h1", ["1A"], "alice", "101@2026-11-14");
     hold("h2", ["1A"], "alice", "101@2026-11-15");
@@ -83,8 +120,8 @@ describe("bookings", () => {
   const setup = (paid = new Set<string>(), pending = new Set<string>()) => {
     const fake = fakeGateway(paid, pending);
     const bookings = createBookings({ store, gateway: fake.gateway, now: () => now, log });
-    const checkout = (seats: ("1A" | "1B" | "2A")[], owner: string) =>
-      bookings.checkout({ movie: MOVIE, seats, owner, ...URLS });
+    const checkout = (seats: SeatId[], owner: string, ip = OFFICE_IP) =>
+      bookings.checkout({ movie: MOVIE, seats, owner, ip, ...URLS });
     return { ...fake, bookings, checkout };
   };
 
@@ -133,6 +170,27 @@ describe("bookings", () => {
     await checkout(["2A"], "alice");
     expect((await bookings.takenSeats(MOVIE.id, "alice")).sort()).toEqual(["1A"]); // sold; own hold 2A hidden
     expect((await bookings.takenSeats(MOVIE.id, "bob")).sort()).toEqual(["1A", "2A"]);
+  });
+
+  it("lets people sharing one IP check out side by side, up to a limit", async () => {
+    const { checkout, expireSession } = setup();
+    const seats: SeatId[] = ["1A", "1B", "1C", "1D", "1E", "1F"];
+    for (let i = 0; i < MAX_OPEN_CHECKOUTS_PER_IP; i += 1) {
+      await checkout([seats[i] ?? "2A"], `browser-${String(i)}`);
+    }
+    expect(expireSession).not.toHaveBeenCalled(); // nobody replaced anybody
+
+    const extra = checkout(["2B"], "browser-extra");
+    await expect(extra).rejects.toMatchObject({ status: 429, code: "too_many_checkouts" });
+    await expect(checkout(["2B"], "elsewhere", "203.0.113.9")).resolves.toHaveProperty("url");
+  });
+
+  it("still lets a visitor at the limit replace their own checkout", async () => {
+    const { checkout } = setup();
+    for (let i = 0; i < MAX_OPEN_CHECKOUTS_PER_IP; i += 1) {
+      await checkout([(["1A", "1B", "1C", "1D", "1E"] as const)[i] ?? "2A"], `browser-${String(i)}`);
+    }
+    await expect(checkout(["2A"], "browser-0")).resolves.toHaveProperty("url");
   });
 
   it("releases the hold when Stripe can't open a session", async () => {

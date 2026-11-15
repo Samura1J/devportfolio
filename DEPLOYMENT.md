@@ -19,7 +19,7 @@ Each app's Vite `base` is already set to its path, so every asset URL in the bui
 
 1. **SPA fallback.** The seat picker uses real URLs (`/projects/seatpicker/seats?movie=…`, `/success?session_id=…`), and Stripe redirects buyers straight to them. Any unknown path under `/projects/seatpicker/` must return that app's `index.html`. Do the same for `/projects/weatherappv2/`. The portfolio is a single page; returning its `index.html` or a 404 for unknown paths are both fine.
 2. **`/api/` proxy.** Pass `/api/` to the Node process. It listens on `127.0.0.1:3000` by default. Keep it bound to loopback.
-3. **Client IP.** The API trusts `X-Forwarded-For` only from loopback (Express `trust proxy: "loopback"`). The proxy must run on the same host and set that header. Rate limits and seat-hold ownership both use the client IP.
+3. **Client IP.** The API trusts `X-Forwarded-For` only from loopback (Express `trust proxy: "loopback"`). The proxy must run on the same host and set that header. Rate limits and the cap of 5 open checkouts per address use the client IP. The proxy must also set `X-Forwarded-Proto`: the seat-hold cookie (`seat_visitor`, HttpOnly, `Path=/api/v1`) is marked `Secure` only when the request arrived over HTTPS.
 4. **Raw webhook body.** Don't let the proxy rewrite `POST /api/v1/stripe/webhook`; Stripe signs the exact bytes.
 5. **Caching.** Files under `*/assets/` have hashed names and can be cached for a year. Don't cache `index.html`.
 
