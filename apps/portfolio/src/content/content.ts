@@ -1,10 +1,9 @@
 /**
  * All page copy lives here, so text can change without touching components.
  *
- * TODO(copy) marks text Corey still needs to confirm. The mockup copy in
- * design/ described features the apps don't have (pricing tiers, seat
- * reservation locks, Lighthouse scores, etc.); the project copy below
- * describes what the TypeScript rewrite actually does instead.
+ * The mockup copy in design/ described features the apps don't have (pricing
+ * tiers, seat reservation locks, Lighthouse scores, etc.); the project copy
+ * below describes what the TypeScript rewrite actually does instead.
  */
 import type {
   Capability,
@@ -42,7 +41,6 @@ export const profile: Profile = {
   name: "Corey Joseph",
   initials: "CJ",
   role: "Full Stack & Frontend Dev",
-  // TODO(copy): confirm availability.
   availability: {
     full: "Open to full-time roles & freelance product work",
     short: "Open to roles & freelance work",
@@ -73,12 +71,10 @@ export const profile: Profile = {
         "End-to-end TypeScript",
       ],
       current_learning: "PostgreSQL, Auth, Deployment",
-      // TODO(copy): confirm.
-      status: "Available for contract & full-time",
+      status: "Available for full-time & freelance",
     },
   },
-  // TODO(copy): confirm.
-  location: { label: "Primary location", value: "Remote / Hybrid" },
+  location: { label: "Primary location", value: "Remote / Hybrid · Atlanta, GA" },
 };
 
 export const projects: Project[] = [
@@ -219,7 +215,6 @@ export const CheckoutRequestSchema = z.object({
  */
 export const roadmap: Roadmap | undefined = undefined;
 
-// TODO(copy): confirm skill levels.
 export const capabilities: Capability[] = [
   {
     title: "Frontend Architecture",
@@ -227,10 +222,10 @@ export const capabilities: Capability[] = [
     tone: "primary",
     blurb: "Responsive, accessible, component-driven client applications.",
     items: [
-      { name: "React (Hooks, Router)", level: "Advanced", tone: "success" },
+      { name: "React (Hooks, Router)", level: "Proficient", tone: "success" },
       { name: "TypeScript (strict)", level: "Proficient", tone: "success" },
-      { name: "Tailwind CSS & Modern CSS", level: "Advanced", tone: "success" },
-      { name: "Responsive & Accessible UI", level: "Advanced", tone: "success" },
+      { name: "Tailwind CSS & Modern CSS", level: "Proficient", tone: "success" },
+      { name: "Responsive & Accessible UI", level: "Proficient", tone: "success" },
     ],
   },
   {
@@ -239,8 +234,8 @@ export const capabilities: Capability[] = [
     tone: "accent",
     blurb: "Typed services that power frontends end-to-end.",
     items: [
-      { name: "Node.js & Express", level: "Proficient", tone: "success" },
-      { name: "REST API Design & zod Validation", level: "Proficient", tone: "success" },
+      { name: "Node.js & Express", level: "Active Focus", tone: "accent" },
+      { name: "REST API Design & zod Validation", level: "Active Focus", tone: "accent" },
       { name: "PostgreSQL & SQL", level: "Active Focus", tone: "accent" },
       { name: "Authentication & Middleware", level: "Active Focus", tone: "accent" },
     ],
@@ -251,10 +246,10 @@ export const capabilities: Capability[] = [
     tone: "warning",
     blurb: "Fast pages, clean history, and checks that catch mistakes before users do.",
     items: [
-      { name: "Git & GitHub Collaboration", level: "Proficient", tone: "success" },
-      { name: "Vitest & Testing Library", level: "Proficient", tone: "success" },
-      { name: "Vite & Modern Tooling", level: "Proficient", tone: "success" },
-      { name: "Cross-Browser Consistency", level: "Proficient", tone: "success" },
+      { name: "Git & GitHub Collaboration", level: "Active Focus", tone: "accent" },
+      { name: "Vitest & Testing Library", level: "Active Focus", tone: "accent" },
+      { name: "Vite & Modern Tooling", level: "Active Focus", tone: "accent" },
+      { name: "Cross-Browser Consistency", level: "Active Focus", tone: "accent" },
     ],
   },
 ];
