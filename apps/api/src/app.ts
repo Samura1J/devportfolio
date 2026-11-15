@@ -9,6 +9,9 @@ import { HttpError, UpstreamError } from "./lib/errors";
 import type { RateLimitOptions } from "./lib/rateLimit";
 import { contactRouter } from "./routes/contact";
 import { seatpickerRouter } from "./routes/seatpicker";
+import { stripeWebhookRouter, type WebhookVerifier } from "./routes/stripeWebhook";
+import { createBookings, type Bookings } from "./seats/bookings";
+import { openSeatStore } from "./seats/store";
 import { weatherRouter } from "./routes/weather";
 
 /** Everything the app talks to, injected so tests can pass fakes. */
@@ -16,6 +19,10 @@ export interface AppDeps {
   config: Config;
   movies?: MovieCatalog | undefined;
   checkout?: CheckoutGateway | undefined;
+  /** Seat holds over `checkout`. Defaults to an in-memory store when checkout is configured. */
+  bookings?: Bookings | undefined;
+  verifyWebhook?: WebhookVerifier | undefined;
+  checkoutLimit?: RateLimitOptions | undefined;
   mailer?: Mailer | undefined;
   weather?: WeatherService | undefined;
   contactLimit?: RateLimitOptions | undefined;
@@ -38,6 +45,12 @@ export function createApp(deps: AppDeps): Express {
   // their X-Forwarded-For so rate limiting sees the real client IP.
   app.set("trust proxy", "loopback");
 
+  const bookings =
+    deps.bookings ?? (deps.checkout ? createBookings({ store: openSeatStore(":memory:"), gateway: deps.checkout }) : undefined);
+
+  // Before the JSON parser: Stripe's signature covers the raw body.
+  app.use(API_BASE, stripeWebhookRouter({ verify: deps.verifyWebhook, bookings }));
+
   const api = express.Router();
   api.use(express.json({ limit: "16kb" }));
   api.use((_req, res, next) => {
@@ -50,7 +63,15 @@ export function createApp(deps: AppDeps): Express {
     const body: HealthResponse = { ok: true };
     res.json(body);
   });
-  api.use(seatpickerRouter({ config: deps.config, movies: deps.movies, checkout: deps.checkout }));
+  api.use(
+    seatpickerRouter({
+      config: deps.config,
+      movies: deps.movies,
+      checkout: deps.checkout,
+      bookings,
+      checkoutLimit: deps.checkoutLimit,
+    }),
+  );
   api.use(contactRouter({ mailer: deps.mailer, limit: deps.contactLimit }));
   api.use(weatherRouter({ weather: deps.weather, limit: deps.weatherLimit }));
 

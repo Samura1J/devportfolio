@@ -1,6 +1,7 @@
 import { MAX_SEATS_PER_ORDER, SEAT_COLUMNS, type SeatId } from "@portfolio/shared";
 import { cn, focusRing } from "@portfolio/ui";
 import { Fragment } from "react";
+import { LuX } from "react-icons/lu";
 import { MdChair } from "react-icons/md";
 import { AISLE_AFTER_ROW, buildSeatMap, seatLabel } from "./seats";
 
@@ -8,15 +9,18 @@ const SEAT_MAP = buildSeatMap();
 
 interface SeatMapProps {
   selected: readonly SeatId[];
+  /** Sold, or held by someone else's checkout. */
+  taken: ReadonlySet<SeatId>;
   onToggle: (seat: SeatId) => void;
 }
 
 /**
  * Ten rows of ten seats, screen at the top, aisle after row 5. Every seat is a
- * toggle button (aria-pressed) named "Row 3, seat C". Once the order limit is
- * reached, the remaining seats are disabled until one is released.
+ * toggle button (aria-pressed) named "Row 3, seat C". Taken seats are disabled
+ * and marked with a cross, not just a color. Once the order limit is reached,
+ * the remaining seats are disabled until one is released.
  */
-export function SeatMap({ selected, onToggle }: SeatMapProps) {
+export function SeatMap({ selected, taken, onToggle }: SeatMapProps) {
   const full = selected.length >= MAX_SEATS_PER_ORDER;
 
   return (
@@ -48,25 +52,29 @@ export function SeatMap({ selected, onToggle }: SeatMapProps) {
               </span>
               {row.map((seat) => {
                 const pressed = selected.includes(seat);
+                const isTaken = taken.has(seat);
                 return (
                   <button
                     key={seat}
                     type="button"
                     aria-pressed={pressed}
-                    aria-label={seatLabel(seat)}
-                    disabled={full && !pressed}
+                    aria-label={isTaken ? `${seatLabel(seat)}, taken` : seatLabel(seat)}
+                    disabled={isTaken || (full && !pressed)}
                     onClick={() => {
                       onToggle(seat);
                     }}
                     className={cn(
-                      "flex aspect-square min-w-0 items-center justify-center border transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+                      "flex aspect-square min-w-0 items-center justify-center border transition-colors disabled:cursor-not-allowed",
                       focusRing,
-                      pressed
-                        ? "border-primary bg-primary text-on-primary"
-                        : "border-outline-strong bg-surface-container text-on-surface-muted enabled:hover:border-primary enabled:hover:text-primary",
+                      isTaken
+                        ? "border-outline bg-surface-container-high text-on-surface-muted"
+                        : pressed
+                          ? "border-primary bg-primary text-on-primary"
+                          : // Dimmed only when disabled by the order limit.
+                          "border-outline-strong bg-surface-container text-on-surface-muted enabled:hover:border-primary enabled:hover:text-primary disabled:opacity-40",
                     )}
                   >
-                    <MdChair aria-hidden className="size-3/5" />
+                    {isTaken ? <LuX aria-hidden className="size-1/2" /> : <MdChair aria-hidden className="size-3/5" />}
                   </button>
                 );
               })}
@@ -83,6 +91,15 @@ export function SeatMap({ selected, onToggle }: SeatMapProps) {
         <li className="flex items-center gap-2">
           <span aria-hidden className="size-4 border border-primary bg-primary" />
           Selected
+        </li>
+        <li className="flex items-center gap-2">
+          <span
+            aria-hidden
+            className="flex size-4 items-center justify-center border border-outline bg-surface-container-high"
+          >
+            <LuX className="size-3" />
+          </span>
+          Taken
         </li>
       </ul>
     </div>

@@ -4,9 +4,12 @@ import {
   CheckoutResponseSchema,
   CheckoutSummarySchema,
   MovieListSchema,
+  SeatAvailabilitySchema,
+  SeatsTakenErrorSchema,
   type CheckoutRequest,
   type CheckoutSummary,
   type Movie,
+  type SeatId,
 } from "@portfolio/shared";
 import type { z } from "zod";
 
@@ -15,6 +18,17 @@ const FALLBACK_MESSAGE = "Something went wrong. Please try again.";
 /** A failure whose message is safe and useful to show. */
 export class ApiRequestError extends Error {
   override name = "ApiRequestError";
+}
+
+/** Checkout lost a race: someone else got these seats first. */
+export class SeatsTakenError extends ApiRequestError {
+  override name = "SeatsTakenError";
+  constructor(
+    message: string,
+    readonly seats: SeatId[],
+  ) {
+    super(message);
+  }
 }
 
 async function request<T extends z.ZodType>(
@@ -32,6 +46,8 @@ async function request<T extends z.ZodType>(
 
   const body: unknown = await res.json().catch(() => undefined);
   if (!res.ok) {
+    const taken = SeatsTakenErrorSchema.safeParse(body);
+    if (taken.success) throw new SeatsTakenError(taken.data.error.message, taken.data.error.seats);
     const apiError = ApiErrorSchema.safeParse(body);
     throw new ApiRequestError(apiError.success ? apiError.data.error.message : FALLBACK_MESSAGE);
   }
@@ -63,6 +79,12 @@ export async function startCheckout(order: CheckoutRequest): Promise<string> {
     body: JSON.stringify(order),
   });
   return url;
+}
+
+/** Seats sold or held by someone else for today's showing. */
+export async function fetchTakenSeats(movieId: number, signal?: AbortSignal): Promise<SeatId[]> {
+  const { taken } = await request(`/movies/${String(movieId)}/seats`, SeatAvailabilitySchema, { signal });
+  return taken;
 }
 
 export function fetchCheckoutSummary(sessionId: string, signal?: AbortSignal): Promise<CheckoutSummary> {

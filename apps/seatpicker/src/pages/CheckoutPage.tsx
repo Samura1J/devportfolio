@@ -3,7 +3,7 @@ import { Button, buttonClasses, Card } from "@portfolio/ui";
 import { useState } from "react";
 import { LuLock } from "react-icons/lu";
 import { Link } from "react-router";
-import { browser, errorMessage, startCheckout } from "../api";
+import { browser, errorMessage, SeatsTakenError, startCheckout } from "../api";
 import { ErrorPanel, Notice, PageHeading } from "../Layout";
 import { selectionSearch, useSelection } from "../selection";
 import { useMovie } from "../useMovie";
@@ -63,9 +63,12 @@ export function CheckoutPage() {
 }
 
 function OrderReview({ movie, seats }: { movie: Movie; seats: SeatId[] }) {
-  const [state, setState] = useState<{ status: "idle" } | { status: "redirecting" } | { status: "error"; message: string }>({
-    status: "idle",
-  });
+  const [state, setState] = useState<
+    | { status: "idle" }
+    | { status: "redirecting" }
+    | { status: "error"; message: string }
+    | { status: "taken"; message: string; seats: SeatId[] }
+  >({ status: "idle" });
   const total = formatPrice(seats.length * TICKET_PRICE_CENTS);
 
   const pay = () => {
@@ -75,7 +78,11 @@ function OrderReview({ movie, seats }: { movie: Movie; seats: SeatId[] }) {
         browser.assign(url);
       },
       (error: unknown) => {
-        setState({ status: "error", message: errorMessage(error) });
+        setState(
+          error instanceof SeatsTakenError
+            ? { status: "taken", message: error.message, seats: error.seats }
+            : { status: "error", message: errorMessage(error) },
+        );
       },
     );
   };
@@ -113,9 +120,27 @@ function OrderReview({ movie, seats }: { movie: Movie; seats: SeatId[] }) {
           </dl>
 
           {state.status === "error" && <ErrorPanel message={state.message} />}
+          {state.status === "taken" && (
+            <ErrorPanel message={state.message}>
+              <Link
+                to={{
+                  pathname: "/seats",
+                  search: selectionSearch({ movieId: movie.id, seats: seats.filter((s) => !state.seats.includes(s)) }),
+                }}
+                className={buttonClasses({ size: "sm" })}
+              >
+                Pick other seats
+              </Link>
+            </ErrorPanel>
+          )}
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button size="lg" onClick={pay} disabled={state.status === "redirecting"} className="flex-1">
+            <Button
+              size="lg"
+              onClick={pay}
+              disabled={state.status === "redirecting" || state.status === "taken"}
+              className="flex-1"
+            >
               <LuLock aria-hidden size={18} />
               {state.status === "redirecting" ? "Opening Stripe…" : `Pay ${total} with Stripe`}
             </Button>

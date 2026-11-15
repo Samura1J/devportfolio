@@ -8,13 +8,15 @@ export class HttpError extends Error {
     readonly code: string,
     message: string,
     readonly headers: Record<string, string> = {},
+    /** Extra machine-readable fields for the error body, e.g. which seats were taken. */
+    readonly details: Record<string, unknown> = {},
   ) {
     super(message);
     this.name = "HttpError";
   }
 
   toBody(): ApiError {
-    return { error: { code: this.code, message: this.message } };
+    return { error: { ...this.details, code: this.code, message: this.message } };
   }
 }
 

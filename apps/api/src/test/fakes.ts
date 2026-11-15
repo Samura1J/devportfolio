@@ -33,13 +33,21 @@ export const SUMMARY: CheckoutSummary = {
   currency: "usd",
 };
 
-export function fakeGateway() {
-  const createSession = vi.fn((_input: CreateSessionInput) =>
-    Promise.resolve({ url: "https://checkout.stripe.com/c/pay/cs_test_123" }),
-  );
+/**
+ * A Stripe stand-in. Each session gets a new id; `paid` lists the session ids
+ * that count as paid when expired or looked up.
+ */
+export function fakeGateway(paid = new Set<string>()) {
+  let count = 0;
+  const createSession = vi.fn((_input: CreateSessionInput) => {
+    count += 1;
+    const id = `cs_test_${String(count)}`;
+    return Promise.resolve({ id, url: `https://checkout.stripe.com/c/pay/${id}` });
+  });
   const getSummary = vi.fn((_id: string) => Promise.resolve(SUMMARY));
-  const gateway: CheckoutGateway = { createSession, getSummary };
-  return { gateway, createSession, getSummary };
+  const expireSession = vi.fn((id: string) => Promise.resolve({ paid: paid.has(id) }));
+  const gateway: CheckoutGateway = { createSession, getSummary, expireSession };
+  return { gateway, createSession, getSummary, expireSession, paid };
 }
 
 export function fakeMailer() {

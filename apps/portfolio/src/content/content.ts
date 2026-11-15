@@ -148,7 +148,7 @@ export function toCondition(code: number): Condition {
     title: "Movie Seat Picker & Checkout",
     shortTitle: "Seat Picker",
     summary: {
-      full: "Pick one of today's trending films, choose seats on a 10×10 auditorium map, and pay through Stripe Checkout in test mode. The server re-checks the movie, every seat and the price before charging.",
+      full: "Pick one of today's trending films, choose seats on a 10×10 auditorium map, and pay through Stripe Checkout in test mode. The server holds the seats while you pay, so two people can't buy the same one.",
       short: "Trending films, a 10×10 seat map, and Stripe Checkout in test mode.",
     },
     badges: [
@@ -160,9 +160,10 @@ export function toCondition(code: number): Condition {
     highlights: [
       "Movies come live from TMDB and are cached on the server.",
       "The selection lives in the URL, so a refresh or a shared link keeps your seats.",
+      "Seats are held in SQLite while you pay; a second buyer for the same seat is turned away.",
       "Seat IDs share one zod schema, and the server validates them before Stripe sees anything.",
     ],
-    stack: ["React 19", "TypeScript", "React Router", "Express 5", "Stripe", "TMDB API"],
+    stack: ["React 19", "TypeScript", "React Router", "Express 5", "SQLite", "Stripe", "TMDB API"],
     liveUrl: "/projects/seatpicker/",
     liveLabel: "Launch Live",
     repoUrl: REPO_URL,
@@ -176,14 +177,14 @@ export function toCondition(code: number): Condition {
         { label: "Seats", value: "100 (10×10)" },
         { label: "Payments", value: "Stripe Checkout" },
         { label: "Movies", value: "Live from TMDB" },
-        { label: "Selection state", value: "URL-persisted" },
+        { label: "Double booking", value: "Prevented" },
       ],
       challenge:
         "Version 1 kept the selection in router state, so a refresh lost it. It sent the movie title and seat count to a server that trusted both, created a new Stripe product on every checkout, and redirected to an internal hostname after payment.",
       solution:
         "Seat IDs are a template-literal type backed by a shared zod schema. The URL carries the movie ID and seats. The server resolves the movie from its own TMDB cache, rejects unknown or duplicate seats, builds the line item itself, and derives the return URLs from configuration.",
       evolution:
-        "Next comes real occupancy: sold seats need a database and short reservation holds that expire if checkout is abandoned. That is the natural next full-stack step for this project.",
+        "Seats are now real inventory. Starting checkout holds them in SQLite, where a primary key on (showing, seat) makes double booking impossible even when two requests arrive together; the loser is told which seats went. A hold lasts as long as its Stripe session. A signed webhook marks seats sold or frees them, and if no webhook arrives, the server asks Stripe before releasing an expired hold, so a paid seat is never resold.",
       snippet: {
         filename: "packages/shared/src/seatpicker.ts",
         language: "TypeScript",

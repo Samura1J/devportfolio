@@ -32,7 +32,9 @@ function stubApi(routes: Record<string, Handler> = {}) {
       routes[key] ??
       (key === "GET /api/v1/movies"
         ? () => Promise.resolve(Response.json(MOVIES))
-        : () => Promise.resolve(Response.json({ error: { code: "not_found", message: "Not found" } }, { status: 404 })));
+        : /^GET \/api\/v1\/movies\/\d+\/seats$/.test(key)
+          ? () => Promise.resolve(Response.json({ taken: [] }))
+          : () => Promise.resolve(Response.json({ error: { code: "not_found", message: "Not found" } }, { status: 404 })));
     return handler(url, init);
   });
   vi.stubGlobal("fetch", fetchFn);
@@ -166,6 +168,47 @@ describe("seats", () => {
   });
 });
 
+describe("taken seats", () => {
+  const takenSeats = (taken: string[]) => ({
+    "GET /api/v1/movies/101/seats": () => Promise.resolve(Response.json({ taken })),
+  });
+
+  it("disables taken seats and says so to screen readers", async () => {
+    stubApi(takenSeats(["3C", "3D"]));
+    renderAt("/seats?movie=101");
+    const takenSeat = await screen.findByRole("button", { name: "Row 3, seat C, taken" });
+    expect(takenSeat).toHaveProperty("disabled", true);
+    expect(seat("Row 3, seat E")).toHaveProperty("disabled", false);
+    expect(within(screen.getByRole("list", { name: "Legend" })).getByText("Taken")).toBeTruthy();
+  });
+
+  it("drops a picked seat that someone else took, and explains why", async () => {
+    stubApi(takenSeats(["5F"]));
+    renderAt("/seats?movie=101&seats=5E,5F");
+    expect(await screen.findByText(/Seat 5F was just taken by someone else/)).toBeTruthy();
+    expect(selectedSeats()).toEqual(["5E"]);
+    expect(screen.getByText("$12.00", { selector: "dd" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Continue to payment" }).getAttribute("href")).toBe(
+      "/checkout?movie=101&seats=5E",
+    );
+
+    fireEvent.click(seat("Row 6, seat A"));
+    expect(currentPath()).toBe("/seats?movie=101&seats=5E,6A"); // 5F leaves the URL too
+  });
+
+  it("checks again when the tab regains focus", async () => {
+    let taken: string[] = [];
+    stubApi({ "GET /api/v1/movies/101/seats": () => Promise.resolve(Response.json({ taken })) });
+    renderAt("/seats?movie=101");
+    await screen.findByText("Future City");
+    expect(seat("Row 1, seat A")).toHaveProperty("disabled", false);
+
+    taken = ["1A"];
+    fireEvent.focus(window);
+    expect(await screen.findByRole("button", { name: "Row 1, seat A, taken" })).toBeTruthy();
+  });
+});
+
 describe("checkout", () => {
   it("sends only the movie id and seats, then goes to Stripe", async () => {
     const assign = vi.spyOn(browser, "assign").mockImplementation(() => undefined);
@@ -201,6 +244,30 @@ describe("checkout", () => {
     fireEvent.click(await screen.findByRole("button", { name: /Pay \$12\.00/ }));
     expect((await screen.findByRole("alert")).textContent).toContain("That movie is no longer showing.");
     expect(screen.getByRole("button", { name: /Pay \$12\.00/ })).toHaveProperty("disabled", false);
+  });
+
+  it("explains a seat lost to someone else and links back without it", async () => {
+    stubApi({
+      "POST /api/v1/checkout": () =>
+        Promise.resolve(
+          Response.json(
+            {
+              error: {
+                code: "seats_taken",
+                message: "Seat 5F was just taken by someone else. Please pick another.",
+                seats: ["5F"],
+              },
+            },
+            { status: 409 },
+          ),
+        ),
+    });
+    renderAt("/checkout?movie=101&seats=5E,5F");
+    fireEvent.click(await screen.findByRole("button", { name: /Pay \$24\.00/ }));
+
+    expect((await screen.findByRole("alert")).textContent).toContain("Seat 5F was just taken");
+    expect(screen.getByRole("link", { name: "Pick other seats" }).getAttribute("href")).toBe("/seats?movie=101&seats=5E");
+    expect(screen.getByRole("button", { name: /Pay \$24\.00/ })).toHaveProperty("disabled", true);
   });
 
   it("asks for seats first when there are none", () => {

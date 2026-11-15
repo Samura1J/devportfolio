@@ -15,6 +15,10 @@ const EnvSchema = z
     STRIPE_SECRET_KEY: optional(
       z.string().regex(/^(sk|rk)_(test|live)_/, "must be a Stripe secret key (sk_… or rk_…)"),
     ),
+    /** Signing secret of the Stripe webhook endpoint (whsec_…). Optional: without it, holds resolve when they expire. */
+    STRIPE_WEBHOOK_SECRET: optional(z.string().regex(/^whsec_/, "must be a Stripe webhook signing secret (whsec_…)")),
+    /** SQLite file for seat holds and sales. */
+    SEAT_DB_PATH: optional(z.string()).default("data/seats.db"),
     WEATHERAPI_KEY: optional(z.string()),
     RESEND_API_KEY: optional(z.string()),
     CONTACT_TO: optional(z.email()),
@@ -42,6 +46,8 @@ export interface Config {
   publicUrl: string;
   tmdbReadToken: string | undefined;
   stripeSecretKey: string | undefined;
+  stripeWebhookSecret: string | undefined;
+  seatDbPath: string;
   weatherApiKey: string | undefined;
   contact: { resendApiKey: string; to: string; from: string } | undefined;
 }
@@ -73,6 +79,8 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): Config {
     publicUrl: (env.PUBLIC_URL ?? "http://localhost:5173").replace(/\/+$/, ""),
     tmdbReadToken: env.TMDB_READ_TOKEN,
     stripeSecretKey: env.STRIPE_SECRET_KEY,
+    stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
+    seatDbPath: env.SEAT_DB_PATH,
     weatherApiKey: env.WEATHERAPI_KEY,
     contact:
       env.RESEND_API_KEY && env.CONTACT_TO
@@ -86,6 +94,9 @@ export function disabledFeatures(config: Config): string[] {
   const off: string[] = [];
   if (!config.tmdbReadToken) off.push("movies (TMDB_READ_TOKEN)");
   if (!config.stripeSecretKey) off.push("checkout (STRIPE_SECRET_KEY)");
+  else if (!config.stripeWebhookSecret) {
+    off.push("payment webhooks (STRIPE_WEBHOOK_SECRET); paid seats are confirmed on the success page or when holds expire");
+  }
   if (!config.weatherApiKey) off.push("weather (WEATHERAPI_KEY)");
   if (!config.contact) off.push("contact (RESEND_API_KEY + CONTACT_TO)");
   return off;

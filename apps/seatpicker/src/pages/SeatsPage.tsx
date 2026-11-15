@@ -1,14 +1,27 @@
-import { formatPrice, MAX_SEATS_PER_ORDER, TICKET_PRICE_CENTS } from "@portfolio/shared";
+import { formatPrice, MAX_SEATS_PER_ORDER, TICKET_PRICE_CENTS, type SeatId } from "@portfolio/shared";
 import { buttonClasses, Card } from "@portfolio/ui";
 import { Link } from "react-router";
 import { ErrorPanel, Notice, PageHeading } from "../Layout";
 import { SeatMap } from "../SeatMap";
 import { selectionSearch, useSelection } from "../selection";
 import { useMovie } from "../useMovie";
+import { useTakenSeats } from "../useTakenSeats";
 
 export function SeatsPage() {
-  const { movieId, seats, toggleSeat, setSeats } = useSelection();
+  const { movieId, seats: requested, setSeats } = useSelection();
   const [movie, retry] = useMovie(movieId);
+  const { taken } = useTakenSeats(movieId);
+
+  // Seats someone else took since they were picked (or in a stale link) drop
+  // out of the order; the URL loses them on the next change.
+  const lost = requested.filter((seat) => taken.has(seat));
+  const seats = requested.filter((seat) => !taken.has(seat));
+  const toggleSeat = (seat: SeatId) => {
+    setSeats((current) => {
+      const kept = current.filter((s) => !taken.has(s));
+      return kept.includes(seat) ? kept.filter((s) => s !== seat) : [...kept, seat];
+    });
+  };
 
   if (movie.status === "error") {
     return (
@@ -38,13 +51,19 @@ export function SeatsPage() {
       </PageHeading>
 
       <div className="grid gap-gutter-lg lg:grid-cols-[1fr_20rem] lg:items-start">
-        <SeatMap selected={seats} onToggle={toggleSeat} />
+        <SeatMap selected={seats} taken={taken} onToggle={toggleSeat} />
 
         <Card as="section" aria-labelledby="order-heading" className="space-y-gutter-md p-gutter-md lg:sticky lg:top-6">
           <h2 id="order-heading" className="font-headline text-headline-sm">
             Your seats
           </h2>
           <div aria-live="polite" className="space-y-3">
+            {lost.length > 0 && (
+              <p className="border-l-2 border-warning pl-3 font-body text-body-md">
+                {lost.length === 1 ? `Seat ${lost.join("")} was` : `Seats ${lost.join(", ")} were`} just taken by
+                someone else, so {lost.length === 1 ? "it's" : "they're"} no longer in your order.
+              </p>
+            )}
             {count === 0 ? (
               <p className="font-body text-body-md text-on-surface-muted">No seats yet. Tap a seat to add it.</p>
             ) : (

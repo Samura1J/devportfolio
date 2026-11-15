@@ -283,6 +283,19 @@ Changes from the steps below, found while building:
 
 Done when a full flow works end to end in dev: pick a movie, pick seats, refresh (state survives), Stripe test card `4242 4242 4242 4242`, land on `/success`. Cancel lands on `/cancel`.
 
+### Phase 4b: Seat holds (no double booking) ✅ done 2026-11-15
+
+Added after Phase 4 on request. Before this, two people could buy the same seat: the server validated seat IDs but stored nothing.
+
+- **Store:** SQLite through Node's built-in `node:sqlite` (no native package; Node 22 prints an "experimental" warning at startup, silenced in tests). One row per taken seat, primary key `(showing, seat)`, in `apps/api/data/seats.db` (`SEAT_DB_PATH`, gitignored). Holding is all-or-nothing in one transaction.
+- **Showing** = movie + UTC day, so every theater starts empty each day; rows older than a day are cleared by a sweep every 5 minutes.
+- **Checkout** holds the seats first, then opens a Stripe session that expires after 31 minutes (Stripe's minimum is 30); the hold lasts 2 minutes longer. A seat someone else holds or bought gives **409 `seats_taken`** with the seat list. If Stripe fails, the hold is released. Checkout is rate limited to 20 per 15 minutes per IP.
+- **One unpaid checkout per visitor (IP).** A new checkout first expires the visitor's previous Stripe session (so it can't be paid later) and releases its seats, unless it turns out to be paid, in which case they're sold. A visitor's own hold doesn't show as taken to them. Two tabs in one browser are therefore one visitor: the newer checkout replaces the older.
+- **Payment news:** `POST /api/v1/stripe/webhook` (raw body, signature checked, `STRIPE_WEBHOOK_SECRET`, optional) sells on `checkout.session.completed`/`async_payment_succeeded` and frees on `expired`/`async_payment_failed`. The success page's session lookup also sells. **Without a webhook**, an expired hold is resolved by asking Stripe (expire the session; paid → sold, else freed); if Stripe can't be reached, the seats stay taken and it's retried.
+- **Seat picker:** `GET /api/v1/movies/:id/seats` returns `{ taken }`, refreshed every 30 s while visible and on focus. Taken seats are disabled, marked with ✕ (not just color) and named "…, taken". A picked seat that becomes taken drops out of the order with a note. A 409 at checkout explains which seat went and links back without it.
+- **Bundling:** tsup strips `node:` prefixes by default, turning `node:sqlite` into a missing `sqlite` package, so the built server crashed on start while tests and dev were fine. `removeNodeProtocol: false` in `tsup.config.ts` fixes it; the built server was started and answered the seats route.
+- **Verified live:** two checkouts for 7C/7D from different IPs against real Stripe test mode: one 201, one 409 naming both seats; the map showed them taken and checkout for 7D was refused with a link back to 7E. Not verified live: a real webhook delivery (needs the Stripe CLI); covered by tests signed with Stripe's own test-header helper.
+
 ### Phase 5: Wrap-up (still before deployment)
 
 - `npm run build` at the root produces four `dist/` folders. Check the asset paths respect each `base` using `vite preview`.

@@ -14,19 +14,31 @@ export interface CreateSessionInput {
   seats: SeatId[];
   successUrl: string;
   cancelUrl: string;
+  /** Our seat hold, so a webhook or a later lookup can find it. */
+  holdId: string;
+  /** When Stripe stops accepting payment, in ms. Stripe allows 30 minutes to 24 hours. */
+  expiresAt: number;
 }
 
 /** The payment provider, behind an interface so routes can be tested with a fake. */
 export interface CheckoutGateway {
-  createSession(input: CreateSessionInput): Promise<{ url: string }>;
+  createSession(input: CreateSessionInput): Promise<{ id: string; url: string }>;
   getSummary(sessionId: string): Promise<CheckoutSummary>;
+  /**
+   * Stops an unpaid session from being paid. Returns whether it had already
+   * been paid, in which case it's left alone.
+   */
+  expireSession(sessionId: string): Promise<{ paid: boolean }>;
 }
+
+/** What a verified Stripe webhook means for a seat hold, if anything. */
+export type PaymentEvent = { kind: "paid" | "unpaid"; sessionId: string } | { kind: "ignored" };
 
 export function createStripeGateway(secretKey: string): CheckoutGateway {
   const stripe = new Stripe(secretKey, { maxNetworkRetries: 1, timeout: 10_000 });
 
   return {
-    async createSession({ movie, seats, successUrl, cancelUrl }) {
+    async createSession({ movie, seats, successUrl, cancelUrl, holdId, expiresAt }) {
       let session: Stripe.Checkout.Session;
       try {
         session = await stripe.checkout.sessions.create({
@@ -45,13 +57,28 @@ export function createStripeGateway(secretKey: string): CheckoutGateway {
           ],
           success_url: successUrl,
           cancel_url: cancelUrl,
-          metadata: { movieId: String(movie.id), movieTitle: movie.title, seats: seats.join(",") },
+          // Stripe refuses payment after this, so the seat hold can end then too.
+          expires_at: Math.floor(expiresAt / 1000),
+          metadata: { movieId: String(movie.id), movieTitle: movie.title, seats: seats.join(","), holdId },
         });
       } catch (error) {
         throw new UpstreamError("Stripe", errorDetail(error));
       }
       if (!session.url) throw new UpstreamError("Stripe", "session has no url");
-      return { url: session.url };
+      return { id: session.id, url: session.url };
+    },
+
+    async expireSession(sessionId) {
+      try {
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        if (session.status === "open") {
+          const expired = await stripe.checkout.sessions.expire(sessionId);
+          return { paid: expired.payment_status === "paid" };
+        }
+        return { paid: session.payment_status === "paid" };
+      } catch (error) {
+        throw new UpstreamError("Stripe", errorDetail(error));
+      }
     },
 
     async getSummary(sessionId) {
@@ -73,6 +100,33 @@ export function createStripeGateway(secretKey: string): CheckoutGateway {
         currency: session.currency ?? CURRENCY,
       };
     },
+  };
+}
+
+/**
+ * Checks a webhook's signature and reduces it to what the seat store needs.
+ * Only checkout events matter: paid (sell the seats) or over without payment
+ * (release them). A bad signature throws.
+ */
+export function createWebhookVerifier(webhookSecret: string) {
+  // Verification is local (an HMAC); this client never makes a request.
+  const stripe = new Stripe("sk_test_webhook_verification_only");
+  return (payload: Buffer, signature: string): PaymentEvent => {
+    const event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+    switch (event.type) {
+      case "checkout.session.completed":
+        // Card payments are paid on completion; delayed methods report later.
+        return event.data.object.payment_status === "paid"
+          ? { kind: "paid", sessionId: event.data.object.id }
+          : { kind: "ignored" };
+      case "checkout.session.async_payment_succeeded":
+        return { kind: "paid", sessionId: event.data.object.id };
+      case "checkout.session.expired":
+      case "checkout.session.async_payment_failed":
+        return { kind: "unpaid", sessionId: event.data.object.id };
+      default:
+        return { kind: "ignored" };
+    }
   };
 }
 

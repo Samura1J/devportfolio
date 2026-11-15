@@ -65,3 +65,18 @@ export function formatPrice(cents: number, currency: string = CURRENCY): string 
     cents / 100,
   );
 }
+
+/** Seats sold or held by someone else for today's showing of a movie. */
+export const SeatAvailabilitySchema = z.object({
+  taken: z.array(SeatIdSchema),
+});
+export type SeatAvailability = z.infer<typeof SeatAvailabilitySchema>;
+
+/** The 409 body when checkout loses a race for a seat. */
+export const SeatsTakenErrorSchema = z.object({
+  error: z.object({
+    code: z.literal("seats_taken"),
+    message: z.string(),
+    seats: z.array(SeatIdSchema).min(1),
+  }),
+});
