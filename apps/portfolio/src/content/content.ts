@@ -20,8 +20,9 @@ import type {
 
 const GITHUB_URL = "https://github.com/Samura1J";
 const LINKEDIN_URL = "https://www.linkedin.com/in/corey-joseph-5517a917/";
-// TODO(copy): point at the portfolio-ts repository once it is public.
-const REPO_URL = GITHUB_URL;
+const REPO_URL = "https://github.com/Samura1J/devportfolio";
+/** Each project's "View code" button opens its own folder in the repository. */
+const repoPath = (path: string) => `${REPO_URL}/tree/main/${path}`;
 
 export const navItems: NavItem[] = [
   { href: "#projects", label: "Featured Projects" },
@@ -54,11 +55,11 @@ export const profile: Profile = {
     full: ", a web developer specializing in React interfaces, state-driven user flows, and typed Node backends. I help businesses turn product ideas into clean, reliable, accessible applications.",
     short: ", building React interfaces backed by typed Node APIs for product teams.",
   },
-  // TODO(copy): the mockup's "100% Client Delivery Focus" was replaced with a checkable claim.
+  // The mockup's "100% Client Delivery Focus" was replaced with claims the code backs up.
   metrics: [
     { value: "React + TS", label: "Frontend core" },
     { value: "Full Stack", label: "Node / Express / APIs", tone: "accent" },
-    { value: "Typed E2E", label: "Shared schemas, strict TS", tone: "success" },
+    { value: "End-to-end types", label: "Shared schemas, strict TS", tone: "success" },
   ],
   profileCard: {
     filename: "engineer-profile.json",
@@ -104,7 +105,7 @@ export const projects: Project[] = [
     stack: ["React 19", "TypeScript", "Express 5", "zod", "Tailwind CSS"],
     liveUrl: "/projects/weatherappv2/",
     liveLabel: "Launch Live",
-    repoUrl: REPO_URL,
+    repoUrl: repoPath("apps/weather"),
     caseStudy: {
       heading: "Technical Case Study & Architecture",
       tags: ["React 19", "TypeScript", "WeatherAPI.com", "Express proxy"],
@@ -166,7 +167,7 @@ export function toCondition(code: number): Condition {
     stack: ["React 19", "TypeScript", "React Router", "Express 5", "SQLite", "Stripe", "TMDB API"],
     liveUrl: "/projects/seatpicker/",
     liveLabel: "Launch Live",
-    repoUrl: REPO_URL,
+    repoUrl: repoPath("apps/seatpicker"),
     caseStudy: {
       heading: "Checkout Flow & State Architecture",
       tags: ["React 19", "TypeScript", "Stripe Checkout", "TMDB API"],
@@ -210,14 +211,13 @@ export const CheckoutRequestSchema = z.object({
   },
 ];
 
-// TODO(copy): confirm this project exists, or set to undefined to hide the teaser.
-export const roadmap: Roadmap | undefined = {
-  title: "Currently Building: Full-Stack SaaS MVP",
-  status: "In Development",
-  description:
-    "Node.js + Express REST API with a PostgreSQL database, JWT authentication, and a React dashboard.",
-  link: { href: GITHUB_URL, label: "Track on GitHub" },
-};
+/**
+ * The "Currently Building" teaser under the projects. Hidden until there's a
+ * public repository to link; to show it, set something like:
+ *   { title: "Currently Building: …", status: "In Development",
+ *     description: "…", link: { href: "<repo url>", label: "Track on GitHub" } }
+ */
+export const roadmap: Roadmap | undefined = undefined;
 
 // TODO(copy): confirm skill levels.
 export const capabilities: Capability[] = [
