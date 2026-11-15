@@ -12,6 +12,7 @@
   "scripts": {
     "dev": "concurrently -k -n api,portfolio,weather,seat -c blue,green,yellow,magenta \"npm run dev -w @portfolio/api\" \"npm run dev -w @portfolio/portfolio\" \"npm run dev -w @portfolio/weather\" \"npm run dev -w @portfolio/seatpicker\"",
     "build": "npm run build --workspaces --if-present",
+    "preview": "concurrently -k -n api,portfolio,weather,seat -c blue,green,yellow,magenta \"npm run start -w @portfolio/api\" \"npm run preview -w @portfolio/portfolio\" \"npm run preview -w @portfolio/weather\" \"npm run preview -w @portfolio/seatpicker\"",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "eslint .",
     "test": "vitest run",

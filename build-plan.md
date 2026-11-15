@@ -295,12 +295,14 @@ Added after Phase 4 on request. Before this, two people could buy the same seat:
 - **Seat picker:** `GET /api/v1/movies/:id/seats` returns `{ taken }`, refreshed every 30 s while visible and on focus. Taken seats are disabled, marked with ✕ (not just color) and named "…, taken". A picked seat that becomes taken drops out of the order with a note. A 409 at checkout explains which seat went and links back without it.
 - **Bundling:** tsup strips `node:` prefixes by default, turning `node:sqlite` into a missing `sqlite` package, so the built server crashed on start while tests and dev were fine. `removeNodeProtocol: false` in `tsup.config.ts` fixes it; the built server was started and answered the seats route.
 - **Verified live:** two checkouts for 7C/7D from different IPs against real Stripe test mode: one 201, one 409 naming both seats; the map showed them taken and checkout for 7D was refused with a link back to 7E. Not verified live: a real webhook delivery (needs the Stripe CLI); covered by tests signed with Stripe's own test-header helper.
+- **Delayed payments (fixed in Phase 5, from a security review):** a session that is `complete` but still `unpaid` (a bank debit that hasn't settled) used to count as unpaid when its hold expired, freeing seats being paid for. `expireSession` now returns `paid`, `unpaid` or `pending`; a pending hold stays taken and Stripe is asked again hourly until the `async_payment_*` webhook settles it.
 
-### Phase 5: Wrap-up (still before deployment)
+### Phase 5: Wrap-up (still before deployment) ✅ done 2026-11-15
 
-- `npm run build` at the root produces four `dist/` folders. Check the asset paths respect each `base` using `vite preview`.
-- A README with setup, env vars, and the dev command.
-- A short note for the future deployment plan: the SPA fallback is needed for `/projects/seatpicker/*` deep links, `/api` is reverse-proxied to Node, and the API reads `.env` via `--env-file`.
+- `npm run build` at the root produces four `dist/` folders. Every asset URL in the built HTML, CSS and JS carries its app's `base`.
+- **`npm run preview`** (new) runs the built output on one origin: the built API plus `vite preview` for each app, with the portfolio's preview proxying `/api` and both demo apps, just like the dev setup. Verified there: every app, favicon, font and weather icon loads; seat-picker deep links (`/seats?…`, `/success?…`) fall back to the app; `/api/v1/movies` and place search answer through the proxy. There's also a `preview` entry in `.claude/launch.json`.
+- `README.md`: setup, the dev, build, preview and check commands, every env var, test payments and the optional webhook.
+- `DEPLOYMENT.md`: requirements for the future deployment plan, with an nginx sketch. Covers the static paths, the SPA fallback for `/projects/seatpicker/*`, the `/api` reverse proxy on the same host (`trust proxy` is loopback only), `--env-file`, the required production keys, a persistent SQLite path with a single API process, and the webhook events to subscribe to.
 
 ---
 

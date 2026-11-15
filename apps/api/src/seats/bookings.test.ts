@@ -80,8 +80,8 @@ describe("bookings", () => {
     store.close();
   });
 
-  const setup = (paid = new Set<string>()) => {
-    const fake = fakeGateway(paid);
+  const setup = (paid = new Set<string>(), pending = new Set<string>()) => {
+    const fake = fakeGateway(paid, pending);
     const bookings = createBookings({ store, gateway: fake.gateway, now: () => now, log });
     const checkout = (seats: ("1A" | "1B" | "2A")[], owner: string) =>
       bookings.checkout({ movie: MOVIE, seats, owner, ...URLS });
@@ -183,6 +183,18 @@ describe("bookings", () => {
     expect(expireSession).toHaveBeenCalledTimes(2);
     await bookings.takenSeats(MOVIE.id, "carol");
     expect(expireSession).toHaveBeenCalledTimes(2); // resolved once
+  });
+
+  it("keeps the seats of a delayed payment that hasn't settled, and checks again later", async () => {
+    const { checkout, bookings, expireSession } = setup(new Set(), new Set(["cs_test_1"]));
+    await checkout(["1A"], "alice"); // paid by bank debit: complete, but unpaid for now
+    now += 40 * MINUTE;
+    expect(await bookings.takenSeats(MOVIE.id, "bob")).toEqual(["1A"]);
+    expect(await bookings.takenSeats(MOVIE.id, "bob")).toEqual(["1A"]);
+    expect(expireSession).toHaveBeenCalledOnce(); // not asked again right away
+
+    bookings.settle("cs_test_1", false); // async_payment_failed webhook
+    expect(await bookings.takenSeats(MOVIE.id, "bob")).toEqual([]);
   });
 
   it("keeps an expired hold taken while Stripe can't be reached", async () => {

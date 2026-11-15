@@ -43,6 +43,8 @@ export interface SeatStore {
   attachSession(holdId: string, sessionId: string): boolean;
   holdForSession(sessionId: string): string | undefined;
   markSold(holdId: string): void;
+  /** Keeps an unpaid hold until `expiresAt` (a payment is still settling). */
+  extendHold(holdId: string, expiresAt: number): void;
   release(holdId: string): void;
   /** Unpaid holds belonging to `owner`. */
   pendingHolds(owner: string): Hold[];
@@ -74,6 +76,7 @@ export function openSeatStore(path: string): SeatStore {
     ),
     attach: db.prepare(`UPDATE seat_holds SET session_id = :sessionId WHERE hold_id = :holdId`),
     bySession: db.prepare(`SELECT hold_id FROM seat_holds WHERE session_id = :sessionId LIMIT 1`),
+    extend: db.prepare(`UPDATE seat_holds SET expires_at = :expiresAt WHERE hold_id = :holdId AND status = 'held'`),
     sold: db.prepare(`UPDATE seat_holds SET status = 'sold' WHERE hold_id = :holdId`),
     release: db.prepare(`DELETE FROM seat_holds WHERE hold_id = :holdId AND status = 'held'`),
     pending: db.prepare(
@@ -128,6 +131,10 @@ export function openSeatStore(path: string): SeatStore {
 
     markSold(holdId) {
       statements.sold.run({ holdId });
+    },
+
+    extendHold(holdId, expiresAt) {
+      statements.extend.run({ holdId, expiresAt });
     },
 
     release(holdId) {

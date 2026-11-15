@@ -2,7 +2,7 @@ import type { CheckoutSummary, ContactRequest, ForecastResponse, Location, Movie
 import { vi } from "vitest";
 import type { AppDeps } from "../app";
 import { createApp } from "../app";
-import type { CheckoutGateway, CreateSessionInput } from "../clients/checkout";
+import type { CheckoutGateway, CreateSessionInput, SessionOutcome } from "../clients/checkout";
 import type { Mailer } from "../clients/mailer";
 import type { MovieCatalog } from "../clients/tmdb";
 import type { WeatherService } from "../clients/weatherapi";
@@ -35,9 +35,10 @@ export const SUMMARY: CheckoutSummary = {
 
 /**
  * A Stripe stand-in. Each session gets a new id; `paid` lists the session ids
- * that count as paid when expired or looked up.
+ * that count as paid when expired or looked up, `pending` those whose delayed
+ * payment hasn't settled.
  */
-export function fakeGateway(paid = new Set<string>()) {
+export function fakeGateway(paid = new Set<string>(), pending = new Set<string>()) {
   let count = 0;
   const createSession = vi.fn((_input: CreateSessionInput) => {
     count += 1;
@@ -45,7 +46,9 @@ export function fakeGateway(paid = new Set<string>()) {
     return Promise.resolve({ id, url: `https://checkout.stripe.com/c/pay/${id}` });
   });
   const getSummary = vi.fn((_id: string) => Promise.resolve(SUMMARY));
-  const expireSession = vi.fn((id: string) => Promise.resolve({ paid: paid.has(id) }));
+  const expireSession = vi.fn((id: string) =>
+    Promise.resolve<SessionOutcome>(paid.has(id) ? "paid" : pending.has(id) ? "pending" : "unpaid"),
+  );
   const gateway: CheckoutGateway = { createSession, getSummary, expireSession };
   return { gateway, createSession, getSummary, expireSession, paid };
 }

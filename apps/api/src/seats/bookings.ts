@@ -10,6 +10,8 @@ export const SESSION_MINUTES = 31;
 const HOLD_GRACE_MS = 2 * 60 * 1000;
 /** Sold seats are kept for a day after their showing, then cleared. */
 const KEEP_DAYS = 1;
+/** A delayed payment can take days; its webhook settles it, and Stripe is asked again this often. */
+const PENDING_RECHECK_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const utcDate = (ms: number) => new Date(ms).toISOString().slice(0, 10);
@@ -61,14 +63,18 @@ interface BookingsOptions {
 }
 
 export function createBookings({ store, gateway, now = Date.now, log = console.warn }: BookingsOptions): Bookings {
-  /** Ends a hold based on what Stripe says: sold if paid, otherwise released. */
+  /**
+   * Ends a hold based on what Stripe says: sold if paid, released if not. A
+   * payment still settling keeps the seats held and is checked again later.
+   */
   const resolveWithStripe = async (holdId: string, sessionId: string | null) => {
     if (!sessionId) {
       store.release(holdId); // the session was never created
       return;
     }
-    const { paid } = await gateway.expireSession(sessionId);
-    if (paid) store.markSold(holdId);
+    const outcome = await gateway.expireSession(sessionId);
+    if (outcome === "paid") store.markSold(holdId);
+    else if (outcome === "pending") store.extendHold(holdId, now() + PENDING_RECHECK_MS);
     else store.release(holdId);
   };
 

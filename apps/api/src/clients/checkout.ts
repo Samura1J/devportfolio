@@ -25,11 +25,19 @@ export interface CheckoutGateway {
   createSession(input: CreateSessionInput): Promise<{ id: string; url: string }>;
   getSummary(sessionId: string): Promise<CheckoutSummary>;
   /**
-   * Stops an unpaid session from being paid. Returns whether it had already
-   * been paid, in which case it's left alone.
+   * Stops an unpaid session from being paid, and says how it ended: "paid",
+   * "unpaid" (expired, nothing owed), or "pending" when the buyer completed
+   * checkout with a delayed method (a bank debit, say) that hasn't settled.
    */
-  expireSession(sessionId: string): Promise<{ paid: boolean }>;
+  expireSession(sessionId: string): Promise<SessionOutcome>;
 }
+
+export type SessionOutcome = "paid" | "unpaid" | "pending";
+
+const outcomeOf = (session: Stripe.Checkout.Session): SessionOutcome => {
+  if (session.payment_status !== "unpaid") return "paid"; // "paid" or "no_payment_required"
+  return session.status === "complete" ? "pending" : "unpaid";
+};
 
 /** What a verified Stripe webhook means for a seat hold, if anything. */
 export type PaymentEvent = { kind: "paid" | "unpaid"; sessionId: string } | { kind: "ignored" };
@@ -72,10 +80,9 @@ export function createStripeGateway(secretKey: string): CheckoutGateway {
       try {
         const session = await stripe.checkout.sessions.retrieve(sessionId);
         if (session.status === "open") {
-          const expired = await stripe.checkout.sessions.expire(sessionId);
-          return { paid: expired.payment_status === "paid" };
+          return outcomeOf(await stripe.checkout.sessions.expire(sessionId));
         }
-        return { paid: session.payment_status === "paid" };
+        return outcomeOf(session);
       } catch (error) {
         throw new UpstreamError("Stripe", errorDetail(error));
       }
