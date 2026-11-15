@@ -227,7 +227,7 @@ export const capabilities: Capability[] = [
     tone: "primary",
     blurb: "Responsive, accessible, component-driven client applications.",
     items: [
-      { name: "React (Hooks, Context, Router)", level: "Advanced", tone: "success" },
+      { name: "React (Hooks, Router)", level: "Advanced", tone: "success" },
       { name: "TypeScript (strict)", level: "Proficient", tone: "success" },
       { name: "Tailwind CSS & Modern CSS", level: "Advanced", tone: "success" },
       { name: "Responsive & Accessible UI", level: "Advanced", tone: "success" },
