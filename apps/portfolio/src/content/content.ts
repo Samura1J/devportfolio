@@ -184,22 +184,25 @@ export function toCondition(code: number): Condition {
         "Seat IDs are a template-literal type backed by a shared zod schema. The URL carries the movie ID and seats. The server resolves the movie from its own TMDB cache, rejects unknown or duplicate seats, builds the line item itself, and derives the return URLs from configuration.",
       evolution:
         "Next comes real occupancy: sold seats need a database and short reservation holds that expire if checkout is abandoned. That is the natural next full-stack step for this project.",
-      // TODO(copy): replace with the real code once Phase 4 lands.
       snippet: {
         filename: "packages/shared/src/seatpicker.ts",
         language: "TypeScript",
-        code: `// One schema validates seats on the client and the server
+        code: `// One schema validates seats in the browser and on the server
+const SEAT_ID_PATTERN = /^(10|[1-9])[A-J]$/;
+
 export const SeatIdSchema = z
   .string()
-  .regex(/^(10|[1-9])[A-J]$/, "Unknown seat");
+  .regex(SEAT_ID_PATTERN, "Unknown seat")
+  .transform((value) => value as SeatId);
 
 export const CheckoutRequestSchema = z.object({
   movieId: z.number().int().positive(),
   seats: z
     .array(SeatIdSchema)
-    .min(1)
-    .max(MAX_SEATS)
-    .refine((s) => new Set(s).size === s.length, "Duplicate seat"),
+    .min(1, "Pick at least one seat.")
+    .max(MAX_SEATS_PER_ORDER)
+    .refine((seats) => new Set(seats).size === seats.length,
+      "Each seat can only be picked once."),
 });`,
       },
     },

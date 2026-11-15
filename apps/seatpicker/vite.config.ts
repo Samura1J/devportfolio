@@ -17,5 +17,6 @@ export default defineConfig({
   test: {
     name: "seatpicker",
     environment: "jsdom",
+    setupFiles: ["./src/test/setup.ts"],
   },
 });

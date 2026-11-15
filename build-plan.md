@@ -250,7 +250,18 @@ Changes from the steps below, found while building:
 
 Done when choosing Amsterdam shows N cards with correct icons, the toggle switches units without a refetch, and an API outage shows the error state.
 
-### Phase 4: Seat picker frontend
+### Phase 4: Seat picker frontend ✅ done 2026-11-15
+
+Changes from the steps below, found while building:
+- **React Router 7.18.5, not 8.** Version 8.5.1 requires Node 22.22+, and this machine runs 22.19. 7.18.5 supports Node 20+ and has the same declarative API used here.
+- **Quick clicks lost seats.** React Router applies `navigate()` a moment later, so two fast clicks both started from the old URL and only the last seat stuck. Found in the browser. `useSelection` now keeps the latest selection in a ref that the URL catches up to, and a test clicks three seats in one batch.
+- **URLs keep readable commas** (`seats=1A,1B`): the app navigates with a search string, since `setSearchParams` encodes them as `%2C`. The Stripe cancel URL still arrives encoded, which parses the same.
+- **Movies are a 2-column grid on phones**, not the old carousel: every poster is a plain link, with no hidden slides.
+- **Seats page:** an unknown or missing `?movie=` explains the movie isn't showing (the trending list changes daily) instead of an empty map. At 10 seats the remaining seats are disabled. Seats are 26 px on a 375 px screen.
+- **Checkout page** shows the Stripe test card and says no real money moves. **Success** validates `session_id` before calling the API and handles unpaid and expired sessions. **Cancel** shows which seats are still selected.
+- Each page sets its own `<title>` (React 19 hoists it).
+- **Browser check:** the full flow ran against live TMDB and Stripe test mode up to Stripe's hosted page, which showed "Ticket: The Odyssey", seats 5E, 5F, 2 × $12.00 = $24.00. Stripe's Back link landed on `/cancel` with the seats kept, and `/success` reported the real (unpaid) session status. Stripe's payment form didn't draw in the in-app browser pane, so the card step was run by hand in a normal browser: paying with `4242 4242 4242 4242` landed on "You're booked".
+
 
 **4.1 Assets:** none required (posters come from TMDB). Optionally a local fallback poster.
 

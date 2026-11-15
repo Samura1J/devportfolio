@@ -1,40 +1,32 @@
-import { API_BASE, HealthResponseSchema } from "@portfolio/shared";
-import { ThemeToggle } from "@portfolio/ui";
-import { useEffect, useState } from "react";
+import { BrowserRouter, Route, Routes } from "react-router";
+import { Layout } from "./Layout";
+import { CheckoutPage } from "./pages/CheckoutPage";
+import { MoviesPage } from "./pages/MoviesPage";
+import { CancelPage, NotFoundPage, SuccessPage } from "./pages/ResultPages";
+import { SeatsPage } from "./pages/SeatsPage";
 
-type ApiStatus = "checking" | "up" | "down";
+/** Vite's base ("/projects/seatpicker/") without the trailing slash. */
+const BASENAME = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-/** Phase 0 placeholder: proves tokens, theme toggle, shared package and /api proxy work. */
-export function App() {
-  const [api, setApi] = useState<ApiStatus>("checking");
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch(`${API_BASE}/health`, { signal: controller.signal })
-      .then((res) => res.json())
-      .then((body: unknown) => {
-        setApi(HealthResponseSchema.safeParse(body).success ? "up" : "down");
-      })
-      .catch((error: unknown) => {
-        if (!controller.signal.aborted) {
-          console.warn("API health check failed", error);
-          setApi("down");
-        }
-      });
-    return () => {
-      controller.abort();
-    };
-  }, []);
-
+export function AppRoutes() {
   return (
-    <main className="mx-auto max-w-page space-y-gutter-lg px-page-margin py-section">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-display-lg-mobile md:text-display-lg">Seat Picker</h1>
-        <ThemeToggle />
-      </div>
-      <p className="font-mono text-label-sm text-on-surface-muted">
-        API: <span data-testid="api-status">{api}</span>
-      </p>
-    </main>
+    <Routes>
+      <Route element={<Layout />}>
+        <Route index element={<MoviesPage />} />
+        <Route path="seats" element={<SeatsPage />} />
+        <Route path="checkout" element={<CheckoutPage />} />
+        <Route path="success" element={<SuccessPage />} />
+        <Route path="cancel" element={<CancelPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
+    </Routes>
+  );
+}
+
+export function App() {
+  return (
+    <BrowserRouter basename={BASENAME}>
+      <AppRoutes />
+    </BrowserRouter>
   );
 }
