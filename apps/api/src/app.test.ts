@@ -55,6 +55,8 @@ describe("app", () => {
       ["get", "/api/v1/movies"],
       ["post", "/api/v1/checkout"],
       ["post", "/api/v1/contact"],
+      ["get", "/api/v1/weather?lat=1&lon=1"],
+      ["get", "/api/v1/weather/search?q=paris"],
     ] as const) {
       const res = await request(app)[method](path).send({}).expect(503);
       expect(ApiErrorSchema.parse(res.body).error.code).toBe("not_configured");

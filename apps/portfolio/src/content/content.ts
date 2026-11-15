@@ -83,11 +83,11 @@ export const profile: Profile = {
 export const projects: Project[] = [
   {
     slug: "weather",
-    title: "European Cities Weather Forecast",
+    title: "Weather Forecast with Place Search",
     shortTitle: "Weather Forecast",
     summary: {
-      full: "A 3-day forecast for 55 European cities. A typed Express proxy keeps the API key on the server, validates every upstream response, and caches each location for 30 minutes.",
-      short: "3-day forecasts for 55 European cities, served through a typed, cached Express proxy.",
+      full: "A 3-day forecast for any city, found with search-as-you-type. A typed Express proxy keeps the API key on the server, validates every upstream response, and caches forecasts for 30 minutes and searches for a day.",
+      short: "3-day forecasts for any city, with search-as-you-type through a typed, cached Express proxy.",
     },
     badges: [
       { label: "React + TS", variant: "accent" },
@@ -98,7 +98,8 @@ export const projects: Project[] = [
     highlights: [
       "The API key never reaches the browser: every call goes through an Express proxy.",
       "Upstream responses are validated with zod and normalized into one shared type.",
-      "A per-location server cache serves repeat lookups without calling upstream.",
+      "An accessible combobox filters 56 built-in cities instantly and adds search results once typing pauses.",
+      "Server caches serve repeat forecasts and searches without calling upstream.",
     ],
     stack: ["React 19", "TypeScript", "Express 5", "zod", "Tailwind CSS"],
     liveUrl: "/projects/weatherappv2/",
@@ -111,7 +112,7 @@ export const projects: Project[] = [
       intro:
         "A forecast app rebuilt from a browser-only React project into a small full-stack system: a typed proxy owns the API key, validation and caching, and the frontend renders one shared forecast type.",
       metrics: [
-        { label: "Cities", value: "55 EU cities" },
+        { label: "Places", value: "Worldwide search" },
         { label: "Forecast", value: "3 days" },
         { label: "Server cache", value: "30 min" },
         { label: "API key exposure", value: "Server-only" },
@@ -119,25 +120,25 @@ export const projects: Project[] = [
       challenge:
         "Version 1 called a free weather API straight from the browser, parsed a CSV of cities client-side, and hand-converted units and compact date strings. Moving to a keyed API meant the key could no longer ship to the browser.",
       solution:
-        "A thin Express proxy validates the coordinates, checks a per-location cache, fetches the forecast, parses it with zod, and maps WeatherAPI's 48 condition codes onto the app's 14 icons. It returns a DailyForecast type that the frontend imports from the same shared package.",
+        "A thin Express proxy validates the coordinates, checks a per-location cache, fetches the forecast, parses it with zod, and maps all 60 of WeatherAPI's condition codes onto the app's 14 icons. It returns a DailyForecast type that the frontend imports from the same shared package.",
       evolution:
         "The rewrite moved the hard parts to the server: secrets, validation, caching and error mapping. The frontend now only handles loading, error and empty states, and the type checker enforces the contract on both sides.",
-      // TODO(copy): replace with the real code once Phase 2 lands.
       snippet: {
-        filename: "apps/api/src/weather/conditions.ts",
+        filename: "apps/api/src/clients/conditions.ts",
         language: "TypeScript",
-        code: `// Map WeatherAPI condition codes onto the app's icon set
-const CODE_TO_CONDITION: Record<number, Condition> = {
-  1000: "clear",
-  1003: "pcloudy",
-  1006: "cloudy",
-  1009: "mcloudy",
-  1030: "fog", 1135: "fog", 1147: "fog",
-  // ...48 codes in total, checked against weather_conditions.json
+        code: `// WeatherAPI condition codes grouped by the icon that shows them.
+// Codes go up in steps of 3, so they're listed, not ranged.
+const CODES_BY_CONDITION: Record<Condition, readonly number[]> = {
+  clear: [1000],
+  pcloudy: [1003],
+  lightrain: [1063, 1150, 1153, 1180, 1183],
+  tsrain: [1273, 1276, 1279, 1282],
+  // ...14 icons, 60 codes; a test checks every code in
+  // WeatherAPI's weather_conditions.json is mapped
 };
 
 export function toCondition(code: number): Condition {
-  return CODE_TO_CONDITION[code] ?? "cloudy";
+  return CODE_TO_CONDITION.get(code) ?? "cloudy";
 }`,
       },
     },

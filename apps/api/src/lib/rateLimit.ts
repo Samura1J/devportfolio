@@ -1,7 +1,7 @@
 import type { RequestHandler } from "express";
 import { HttpError } from "./errors";
 
-interface RateLimitOptions {
+export interface RateLimitOptions {
   limit: number;
   windowMs: number;
   now?: () => number;

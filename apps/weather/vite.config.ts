@@ -17,5 +17,6 @@ export default defineConfig({
   test: {
     name: "weather",
     environment: "jsdom",
+    setupFiles: ["./src/test/setup.ts"],
   },
 });

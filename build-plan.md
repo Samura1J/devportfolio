@@ -186,7 +186,7 @@ Built from `design/`: one responsive page using `packages/ui`.
 
 Done when the page matches the desktop and mobile mockups (with the D-fixes applied) at 375, 768 and 1280 widths with no axe violations, has no layout flash when loading in dark mode, case studies are deep-linkable, and it builds to `dist/` with base `/`.
 
-### Phase 3: API (before the weather app, because both apps need it) ✅ built 2026-11-14 (live TMDB/Stripe check pending keys)
+### Phase 3: API (before the weather app, because both apps need it) ✅ done 2026-11-15 (live TMDB and Stripe test mode checked)
 
 Changes from the steps below, found while building:
 - **Service keys are only required in production.** In development a missing key turns off just that feature: its routes answer 503 `not_configured`, and startup logs what's off. Production still refuses to start without them, and lists every missing key at once.
@@ -213,7 +213,26 @@ Changes from the steps below, found while building:
 
 Done when, with real test keys in `.env`, `curl` against `/movies` and `/checkout` returns a working Stripe test-mode URL.
 
-### Phase 2: Weather app
+### Phase 2: Weather app ✅ done 2026-11-15
+
+Changes from the steps below, found while building:
+- **60 condition codes, not 48.** The live `weather_conditions.json` adds 1012–1048 (haze, dust, smoke, smog). They map to `fog`. The trimmed list is committed as `apps/api/src/clients/fixtures/weather_conditions.json`, and a test checks every code maps and every icon is used. The mapping lives in `apps/api/src/clients/conditions.ts`.
+- **56 cities, not 55.** The CSV has no trailing newline, so the old count was one short. Gibraltar has no country in the CSV; the UI shows just "Gibraltar". Each city has an ASCII `id` for `?city=`.
+- **The response has no location name.** WeatherAPI now names Amsterdam's coordinates "De Wallen", so the response is just `{ days }` and the app shows its own city name. Each day also carries `chanceOfRain`, and temperatures are rounded on the server.
+- **Icons are CSS masks** filled with the text color, because the SVGs have no fill and would be black on the dark theme. `windy.svg` and `humid.svg` aren't copied (no condition uses them).
+- **The weather route is rate limited** (120 per 15 minutes per IP) to protect the WeatherAPI quota from coordinate sweeps that miss the cache.
+- **State lives in the URL and browser.** The city is in `?city=` (Amsterdam by default, so the page never starts empty), and °C/°F is remembered in `localStorage`.
+- **The portfolio's weather case study** now says 56 cities and 60 codes, and its snippet is the real `conditions.ts` code.
+- `.claude/launch.json` has a `weather-only` config, used to check the outage state with no API running.
+
+**2b Place search** ✅ done 2026-11-15 (added after Phase 2, replacing the city dropdown):
+- `GET /api/v1/weather/search?q=` proxies WeatherAPI `search.json`: 3–80 characters, at most 5 results, cached 24 hours per normalized query (case and spacing), duplicates removed. Forecasts and searches share one rate limit of 300 per 15 minutes per IP.
+- **URLs hold coordinates, not WeatherAPI ids.** `forecast.json?q=id:<bogus>` silently returns some other place (it answered Idlib, Syria), so an edited link would show the wrong city. Built-in cities keep `?city=amsterdam`; search results use `?lat&lon&name&country&region`, validated on load, falling back to Amsterdam.
+- **The 56 built-in cities stay, as instant suggestions.** WeatherAPI search is weak on short prefixes ("ams" returns only Schiphol airport; "Åstorp" finds a Danish town), so the combobox filters the local list on every keystroke (case- and accent-insensitive) and adds API results after a 250 ms pause. API results that match a built-in city are listed once. An empty box lists all 56, so it still works like the old dropdown, and if search is down the local matches remain.
+- **Combobox:** WAI-ARIA pattern with `aria-activedescendant`; arrows, Enter, Esc (close, then restore), and a hidden status line announcing result counts. Each new query aborts the last request, and answers are remembered for the session.
+- **City data fixes** found by the new tests: "Portugual" → "Portugal", and trailing spaces on several countries (England, Germany, Sweden).
+- Copy updated: the weather intro, page description and portfolio case study now describe search instead of "56 European cities".
+
 
 **2.1 Check the WeatherAPI plan:** ✅ checked 2026-11-14. `days=7` returns **3 days** on this key, so `FORECAST_DAYS = 3` with a `md:grid-cols-3` grid. Also: for Amsterdam's coordinates `location.name` came back as **"Binnenstad"** (a neighbourhood). Show the city name from `cities.ts`, not the API's `location.name`.
 

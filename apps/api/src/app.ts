@@ -3,10 +3,13 @@ import express, { type ErrorRequestHandler, type Express } from "express";
 import type { CheckoutGateway } from "./clients/checkout";
 import type { Mailer } from "./clients/mailer";
 import type { MovieCatalog } from "./clients/tmdb";
+import type { WeatherService } from "./clients/weatherapi";
 import type { Config } from "./config";
 import { HttpError, UpstreamError } from "./lib/errors";
+import type { RateLimitOptions } from "./lib/rateLimit";
 import { contactRouter } from "./routes/contact";
 import { seatpickerRouter } from "./routes/seatpicker";
+import { weatherRouter } from "./routes/weather";
 
 /** Everything the app talks to, injected so tests can pass fakes. */
 export interface AppDeps {
@@ -14,7 +17,9 @@ export interface AppDeps {
   movies?: MovieCatalog | undefined;
   checkout?: CheckoutGateway | undefined;
   mailer?: Mailer | undefined;
-  contactLimit?: { limit: number; windowMs: number; now?: () => number } | undefined;
+  weather?: WeatherService | undefined;
+  contactLimit?: RateLimitOptions | undefined;
+  weatherLimit?: RateLimitOptions | undefined;
 }
 
 /** Body-parser errors carry a `type`; map the common ones to clean 4xx. */
@@ -47,6 +52,7 @@ export function createApp(deps: AppDeps): Express {
   });
   api.use(seatpickerRouter({ config: deps.config, movies: deps.movies, checkout: deps.checkout }));
   api.use(contactRouter({ mailer: deps.mailer, limit: deps.contactLimit }));
+  api.use(weatherRouter({ weather: deps.weather, limit: deps.weatherLimit }));
 
   app.use(API_BASE, api);
 

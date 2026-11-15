@@ -2,6 +2,7 @@ import { createApp } from "./app";
 import { createStripeGateway } from "./clients/checkout";
 import { createResendMailer } from "./clients/mailer";
 import { createTmdbCatalog } from "./clients/tmdb";
+import { createWeatherApi } from "./clients/weatherapi";
 import { ConfigError, disabledFeatures, loadConfig, type Config } from "./config";
 
 function readConfig(): Config {
@@ -25,6 +26,7 @@ const app = createApp({
   mailer: config.contact
     ? createResendMailer({ apiKey: config.contact.resendApiKey, to: config.contact.to, from: config.contact.from })
     : undefined,
+  weather: config.weatherApiKey ? createWeatherApi({ apiKey: config.weatherApiKey }) : undefined,
 });
 
 const off = disabledFeatures(config);

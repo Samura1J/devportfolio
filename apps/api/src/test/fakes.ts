@@ -1,10 +1,11 @@
-import type { CheckoutSummary, ContactRequest, Movie } from "@portfolio/shared";
+import type { CheckoutSummary, ContactRequest, ForecastResponse, Location, Movie } from "@portfolio/shared";
 import { vi } from "vitest";
 import type { AppDeps } from "../app";
 import { createApp } from "../app";
 import type { CheckoutGateway, CreateSessionInput } from "../clients/checkout";
 import type { Mailer } from "../clients/mailer";
 import type { MovieCatalog } from "../clients/tmdb";
+import type { WeatherService } from "../clients/weatherapi";
 import { loadConfig, type Config } from "../config";
 
 export const MOVIES: Movie[] = [
@@ -47,6 +48,23 @@ export function fakeMailer() {
   return { mailer, sendContact };
 }
 
+export const FORECAST: ForecastResponse = {
+  days: [
+    { date: "2026-11-15", condition: "lightrain", label: "Patchy rain nearby", highC: 9, lowC: 2, highF: 49, lowF: 35, chanceOfRain: 53 },
+  ],
+};
+
+export const PLACES: Location[] = [
+  { name: "Amsterdam", region: "North Holland", country: "Netherlands", lat: 52.37, lon: 4.89 },
+];
+
+export function fakeWeather() {
+  const getForecast = vi.fn((_lat: number, _lon: number) => Promise.resolve(FORECAST));
+  const searchLocations = vi.fn((_query: string) => Promise.resolve(PLACES));
+  const weather: WeatherService = { getForecast, searchLocations };
+  return { weather, getForecast, searchLocations };
+}
+
 /** An app with every feature wired to fakes; override any dep per test. */
 export function testApp(deps: Partial<AppDeps> = {}) {
   return createApp({
@@ -54,6 +72,7 @@ export function testApp(deps: Partial<AppDeps> = {}) {
     movies: fakeCatalog(),
     checkout: fakeGateway().gateway,
     mailer: fakeMailer().mailer,
+    weather: fakeWeather().weather,
     ...deps,
   });
 }
