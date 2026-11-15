@@ -1,11 +1,36 @@
 import { createApp } from "./app";
+import { createStripeGateway } from "./clients/checkout";
+import { createResendMailer } from "./clients/mailer";
+import { createTmdbCatalog } from "./clients/tmdb";
+import { ConfigError, disabledFeatures, loadConfig, type Config } from "./config";
 
-// Phase 3 replaces this with a validated config module.
-// API_PORT, not PORT: dev tooling exports PORT for the frontend servers.
-const port = Number(process.env.API_PORT ?? 3000);
-const host = process.env.HOST ?? "127.0.0.1";
+function readConfig(): Config {
+  try {
+    return loadConfig();
+  } catch (error) {
+    if (error instanceof ConfigError) {
+      console.error(error.message);
+      process.exit(1);
+    }
+    throw error;
+  }
+}
 
-createApp().listen(port, host, (error) => {
+const config = readConfig();
+
+const app = createApp({
+  config,
+  movies: config.tmdbReadToken ? createTmdbCatalog({ readToken: config.tmdbReadToken }) : undefined,
+  checkout: config.stripeSecretKey ? createStripeGateway(config.stripeSecretKey) : undefined,
+  mailer: config.contact
+    ? createResendMailer({ apiKey: config.contact.resendApiKey, to: config.contact.to, from: config.contact.from })
+    : undefined,
+});
+
+const off = disabledFeatures(config);
+if (off.length > 0) console.warn(`Not configured (routes answer 503): ${off.join(", ")}`);
+
+app.listen(config.port, config.host, (error) => {
   if (error) throw error;
-  console.log(`API listening at http://${host}:${String(port)}`);
+  console.log(`API (${config.env}) listening at http://${config.host}:${String(config.port)}`);
 });

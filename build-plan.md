@@ -186,7 +186,14 @@ Built from `design/`: one responsive page using `packages/ui`.
 
 Done when the page matches the desktop and mobile mockups (with the D-fixes applied) at 375, 768 and 1280 widths with no axe violations, has no layout flash when loading in dark mode, case studies are deep-linkable, and it builds to `dist/` with base `/`.
 
-### Phase 3: API (before the weather app, because both apps need it)
+### Phase 3: API (before the weather app, because both apps need it) ✅ built 2026-11-14 (live TMDB/Stripe check pending keys)
+
+Changes from the steps below, found while building:
+- **Service keys are only required in production.** In development a missing key turns off just that feature: its routes answer 503 `not_configured`, and startup logs what's off. Production still refuses to start without them, and lists every missing key at once.
+- **`POST /api/v1/checkout` returns 201.** The cancel URL carries `?movie=&seats=` so the seat picker can restore the selection. Added `GET /api/v1/checkout/:sessionId` (session id validated) for the success page.
+- **The contact route returns 202.** Resend is called with plain `fetch` (no SDK), and `CONTACT_FROM` defaults to Resend's onboarding sender. The rate limit trusts `X-Forwarded-For` only from loopback (the Vite proxy now, nginx later).
+- **The cache stores promises**, so concurrent misses share one upstream call, and failures aren't cached.
+- **JSON bodies are capped at 16 kB.** Malformed JSON returns 400 and oversized bodies 413, not 500. Upstream failures return 502 with a generic message; details go to the server log only.
 
 **3.1 Config:** `src/config.ts` parses `process.env` with zod and exits with a list of missing vars. Vars: `API_PORT` (default 3000), `HOST`, `PUBLIC_URL` (url), `TMDB_READ_TOKEN`, `STRIPE_SECRET_KEY`, `WEATHERAPI_KEY`, `NODE_ENV`. Rejects `sk_live_` outside production. Ship `.env.example`.
 
